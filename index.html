@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zollamt Jachenau Dashboard</title>
+    <!-- Google Fonts & FontAwesome Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-color: #f8fafc;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --gradient-orange: linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%);
+            --gradient-btn-1: linear-gradient(135deg, #ff9233 0%, #ff5e62 100%);
+            --gradient-btn-2: linear-gradient(135deg, #7028ff 0%, #ff4b91 100%);
+            --card-bg: rgba(255, 255, 255, 0.75);
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        /* Smartphone-Container Simulation */
+        .app-container {
+            width: 100%;
+            max-width: 430px;
+            background: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            box-shadow: 0 0 40px rgba(0,0,0,0.05);
+            overflow: hidden;
+            padding-bottom: 90px;
+        }
+
+        /* Header Styles */
+        header {
+            padding: 30px 24px 10px 24px;
+        }
+
+        .sub-title {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-muted);
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .main-title {
+            font-size: 2.5rem;
+            font-weight: 900;
+            letter-spacing: -1px;
+            text-transform: uppercase;
+        }
+
+        /* Dashboard Card */
+        .balance-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            margin: 10px 24px 24px 24px;
+            padding: 30px 24px;
+            border-radius: 28px;
+            box-shadow: var(--shadow);
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .balance-card:active {
+            transform: scale(0.98);
+        }
+
+        .balance-label {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .balance-amount {
+            font-size: 3rem;
+            font-weight: 800;
+            letter-spacing: -1px;
+        }
+
+        .balance-spent {
+            margin-top: 10px;
+            font-size: 0.85rem;
+            color: #ef4444;
+            font-weight: 600;
+            background: #fee2e2;
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+        }
+
+        /* Navigation Views */
+        .view {
+            display: none;
+            padding: 0 24px;
+            flex-direction: column;
+            gap: 16px;
+            animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .view.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Buttons / Action Cards */
+        .section-label {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            margin-top: 10px;
+            margin-bottom: 4px;
+        }
+
+        .action-btn {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 24px;
+            border-radius: 24px;
+            color: white;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 1.1rem;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            border: none;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .action-btn:active {
+            transform: scale(0.97);
+        }
+
+        .btn-orange { background: var(--gradient-btn-1); }
+        .btn-purple { background: var(--gradient-btn-2); }
+
+        .btn-arrow {
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.3s ease;
+        }
+
+        .action-btn:hover .btn-arrow {
+            transform: translateX(4px);
+        }
+
+        /* Transaction Lists */
+        .transaction-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .transaction-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: white;
+            padding: 16px;
+            border-radius: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+            border: 1px solid #f1f5f9;
+        }
+
+        .trans-icon-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .trans-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .inflow .trans-icon {
+            background: #dcfce7;
+            color: #16a34a;
+        }
+
+        .outflow .trans-icon {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .trans-details .trans-title {
+            font-weight: 700;
+            font-size: 1.05rem;
+            margin-bottom: 2px;
+        }
+
+        .trans-details .trans-type {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .trans-date {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        /* Floating QR Button */
+        .qr-floating-btn {
+            position: fixed;
+            bottom: 100px;
+            right: calc(50% - 190px);
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.4rem;
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+            cursor: pointer;
+            z-index: 99;
+            transition: transform 0.2s ease;
+        }
+
+        @media(max-width: 430px) {
+            .qr-floating-btn {
+                right: 20px;
+            }
+        }
+
+        .qr-floating-btn:active {
+            transform: scale(0.9);
+        }
+
+        /* Bottom Tab Bar Nav */
+        .bottom-nav {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 80px;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid #f1f5f9;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 0 10px;
+            z-index: 100;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 0.75rem;
+            font-weight: 600;
+            gap: 4px;
+            width: 80px;
+            height: 100%;
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+
+        .nav-item i {
+            font-size: 1.35rem;
+            transition: transform 0.2s ease;
+        }
+
+        .nav-item.active {
+            color: var(--text-main);
+        }
+
+        .nav-item.active i {
+            transform: translateY(-2px);
+            color: #0f172a;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        
+        <!-- Dynamischer Header -->
+        <header>
+            <p class="sub-title" id="header-sub">Zollamt Jachenau</p>
+            <h1 class="main-title" id="header-main">Hey!</h1>
+        </header>
+
+        <!-- Globales Guthaben-Modul -->
+        <div class="balance-card">
+            <p class="balance-label">Aktuelles Guthaben</p>
+            <p class="balance-amount">7,34€</p>
+            <span class="balance-spent" id="extra-info" style="display: none;">Gesamt ausgegeben: 1,33€</span>
+        </div>
+
+        <!-- VIEW 1: START -->
+        <div id="view-start" class="view active">
+            <p class="section-label">Schnellauswahl</p>
+            
+            <button class="action-btn btn-orange" onclick="switchTab('auszahlungen')">
+                <span>Auszahlungen ansehen</span>
+                <div class="btn-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+            </button>
+
+            <button class="action-btn btn-purple" onclick="switchTab('einzahlungen')">
+                <span>Einzahlungen ansehen</span>
+                <div class="btn-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+            </button>
+        </div>
+
+        <!-- VIEW 2: EINZAHLUNGEN -->
+        <div id="view-einzahlungen" class="view">
+            <div class="transaction-list">
+                <div class="transaction-item inflow">
+                    <div class="trans-icon-info">
+                        <div class="trans-icon"><i class="fa-solid fa-arrow-trend-up"></i></div>
+                        <div class="trans-details">
+                            <div class="trans-title">10€</div>
+                            <div class="trans-type">Eingehend</div>
+                        </div>
+                    </div>
+                    <div class="trans-date">25.7.2026</div>
+                </div>
+
+                <div class="transaction-item inflow">
+                    <div class="trans-icon-info">
+                        <div class="trans-icon"><i class="fa-solid fa-arrow-trend-up"></i></div>
+                        <div class="trans-details">
+                            <div class="trans-title">5€</div>
+                            <div class="trans-type">Eingehend</div>
+                        </div>
+                    </div>
+                    <div class="trans-date">23.7.2026</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW 3: AUSZAHLUNGEN -->
+        <div id="view-auszahlungen" class="view">
+            <div class="transaction-list">
+                <div class="transaction-item outflow">
+                    <div class="trans-icon-info">
+                        <div class="trans-icon"><i class="fa-solid fa-arrow-trend-down"></i></div>
+                        <div class="trans-details">
+                            <div class="trans-title">1€</div>
+                            <div class="trans-type">Ausgehend</div>
+                        </div>
+                    </div>
+                    <div class="trans-date">25.7.2026</div>
+                </div>
+
+                <div class="transaction-item outflow">
+                    <div class="trans-icon-info">
+                        <div class="trans-icon"><i class="fa-solid fa-arrow-trend-down"></i></div>
+                        <div class="trans-details">
+                            <div class="trans-title">33ct</div>
+                            <div class="trans-type">Ausgehend</div>
+                        </div>
+                    </div>
+                    <div class="trans-date">23.7.2026</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Floating QR Code Button -->
+        <div class="qr-floating-btn" onclick="alert('QR-Code Scanner wird geöffnet...')">
+            <i class="fa-solid fa-qrcode"></i>
+        </div>
+
+        <!-- Bottom Navigation Bar -->
+        <nav class="bottom-nav">
+            <div class="nav-item active" id="nav-start" onclick="switchTab('start')">
+                <i class="fa-solid fa-house"></i>
+                <span>Start</span>
+            </div>
+            <div class="nav-item" id="nav-einzahlungen" onclick="switchTab('einzahlungen')">
+                <i class="fa-solid fa-piggy-bank"></i>
+                <span>Einzahlungen</span>
+            </div>
+            <div class="nav-item" id="nav-auszahlungen" onclick="switchTab('auszahlungen')">
+                <i class="fa-solid fa-receipt"></i>
+                <span>Auszahlungen</span>
+            </div>
+        </nav>
+
+    </div>
+
+    <!-- State Management & Tab Switcher Script -->
+    <script>
+        function switchTab(tabName) {
+            // Alle Ansichten und Nav-Items deaktivieren
+            document.querySelectorAll('.view').forEach(view => view.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            
+            // Header-Elemente und Extra-Info holen
+            const subTitle = document.getElementById('header-sub');
+            const mainTitle = document.getElementById('header-main');
+            const extraInfo = document.getElementById('extra-info');
+
+            // Spezifische Inhalte je nach Tab anpassen
+            if(tabName === 'start') {
+                document.getElementById('view-start').classList.add('active');
+                document.getElementById('nav-start').classList.add('active');
+                subTitle.style.display = 'block';
+                subTitle.innerText = 'Zollamt Jachenau';
+                mainTitle.innerText = 'Hey!';
+                extraInfo.style.display = 'none';
+            } 
+            else if(tabName === 'einzahlungen') {
+                document.getElementById('view-einzahlungen').classList.add('active');
+                document.getElementById('nav-einzahlungen').classList.add('active');
+                subTitle.style.display = 'none';
+                mainTitle.innerText = 'Einzahlungen';
+                extraInfo.style.display = 'none';
+            } 
+            else if(tabName === 'auszahlungen') {
+                document.getElementById('view-auszahlungen').classList.add('active');
+                document.getElementById('nav-auszahlungen').classList.add('active');
+                subTitle.style.display = 'none';
+                mainTitle.innerText = 'Auszahlungen';
+                extraInfo.style.display = 'inline-block';
+            }
+        }
+    </script>
+</body>
+</html>
