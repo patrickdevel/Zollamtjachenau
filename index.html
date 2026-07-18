@@ -12,7 +12,6 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-messaging-compat.js"></script>
 
     <!-- QR Code Scanner Lib -->
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
@@ -271,11 +270,6 @@
                 <div class="empty-state">Lade Meldungen...</div>
             </div>
 
-            <button class="action-btn" id="notify-btn" style="background:#0f172a;" onclick="enableNotifications()">
-                <span>Benachrichtigungen aktivieren</span>
-                <div class="btn-arrow"><i class="fa-solid fa-bell"></i></div>
-            </button>
-
             <p class="section-label" style="margin-top: 20px;">Schnellauswahl</p>
             <button class="action-btn btn-orange" onclick="switchTab('auszahlungen')">
                 <span>Auszahlungen ansehen</span>
@@ -484,40 +478,6 @@
 
         function loginWithGoogle() {
             auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(err => alert("Login Fehler: " + err.message));
-        }
-
-        // --- Push-Benachrichtigungen (Firebase Cloud Messaging) ---
-        // WICHTIG: Damit das tatsächlich Benachrichtigungen verschickt, werden zusätzlich benötigt:
-        //   1) Eine Datei "firebase-messaging-sw.js" im selben Hosting-Root (siehe separate Datei).
-        //   2) Ein VAPID-Key aus der Firebase Console (Project Settings → Cloud Messaging).
-        //   3) Eine kleine Cloud Function, die bei neuer Meldung/Transaktion die gespeicherten
-        //      Tokens ausliest und die Push-Nachricht verschickt (siehe separate Datei sendNotifications.js).
-        // Ohne diese drei Teile speichert dieser Button zwar den Token, es wird aber nichts verschickt.
-        const VAPID_KEY = "HIER-DEINEN-VAPID-KEY-AUS-DER-FIREBASE-CONSOLE-EINTRAGEN";
-
-        async function enableNotifications() {
-            if (!currentUser) return alert("Zuerst anmelden!");
-            if (!('Notification' in window) || !('serviceWorker' in navigator)) {
-                return alert("Dieser Browser unterstützt keine Push-Benachrichtigungen.");
-            }
-            try {
-                const permission = await Notification.requestPermission();
-                if (permission !== 'granted') {
-                    return alert("Benachrichtigungen wurden nicht erlaubt.");
-                }
-                const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
-                const messaging = firebase.messaging();
-                const token = await messaging.getToken({ vapidKey: VAPID_KEY, serviceWorkerRegistration: registration });
-
-                await db.ref(`users/${sanitizeEmail(currentUser.email)}/fcmToken`).set(token);
-
-                const btn = document.getElementById('notify-btn');
-                btn.querySelector('span').innerText = 'Benachrichtigungen aktiv';
-                btn.style.background = '#16a34a';
-                alert("Benachrichtigungen aktiviert!");
-            } catch (err) {
-                alert("Fehler beim Aktivieren der Benachrichtigungen: " + err.message);
-            }
         }
 
         // --- Utils ---
