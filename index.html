@@ -7,14 +7,13 @@
     <!-- Google Fonts & FontAwesome Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<!-- Richtig für GitHub Pages -->
-<link rel="icon" type="image/png" href="favicon.png">
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#0f172a">
-<link rel="apple-touch-icon" href="favicon.png">
-
-
     
+    <!-- Richtig für GitHub Pages -->
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0f172a">
+    <link rel="apple-touch-icon" href="favicon.png">
+
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
@@ -22,6 +21,9 @@
 
     <!-- QR Code Scanner Lib -->
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    
+    <!-- Konfetti Lib -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
     <style>
         :root {
@@ -42,11 +44,11 @@
             -webkit-tap-highlight-color: transparent;
         }
 
-        body { background-color: var(--bg-color); color: var(--text-main); display: flex; justify-content: center; min-height: 100vh; }
+        body { background-color: var(--bg-color); color: var(--text-main); display: flex; justify-content: center; min-height: 100vh; overflow-x: hidden; }
 
         .app-container { width: 100%; max-width: 430px; background: #ffffff; min-height: 100vh; display: flex; flex-direction: column; position: relative; box-shadow: 0 0 40px rgba(0,0,0,0.05); overflow-x: hidden; padding-bottom: 120px; }
 
-        /* Scroll Pills — same liquid glass treatment as the bottom nav */
+        /* Scroll Pills */
         .scroll-pill {
             position: fixed; top: 20px; z-index: 150;
             background:
@@ -71,7 +73,11 @@
         }
         .scroll-pill.visible { opacity: 1; visibility: visible; transform: scale(1); }
         .scroll-pill-left { left: 20px; padding: 12px 24px; font-size: 1.05rem; font-weight: 800; cursor: default; }
-        .scroll-pill-right { right: 20px; padding: 4px; pointer-events: none; }
+        
+        /* HIER WURDE POINTER-EVENTS AUF AUTO GESETZT, DAMIT MAN KLICKEN KANN */
+        .scroll-pill-right { right: 20px; padding: 4px; pointer-events: auto; cursor: pointer; transition: transform 0.2s;}
+        .scroll-pill-right:active { transform: scale(0.9); }
+        
         .scroll-pill-right img { width: 42px; height: 42px; border-radius: 50%; object-fit: cover; border: 2px solid white; }
         .back-icon { margin-right: 10px; cursor: pointer; color: #3b82f6; transition: transform 0.2s; }
         .back-icon:active { transform: scale(0.8); }
@@ -158,58 +164,27 @@
         .qr-floating-btn { position: fixed; bottom: 116px; left: 50%; transform: translateX(130px); width: 56px; height: 56px; background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.4rem; box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4); cursor: pointer; z-index: 99; transition: transform 0.2s ease; }
         @media(max-width: 430px) { .qr-floating-btn { left: auto; right: 20px; transform: none; } }
 
-        /* Bottom Nav — floating "liquid glass" pill, detached from the screen edge */
+        /* Bottom Nav */
         .bottom-nav {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: calc(100% - 40px);
-            max-width: 390px;
-            height: 72px;
-            background:
-                linear-gradient(120deg, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0.08) 45%, rgba(255,255,255,0.35) 100%),
-                rgba(255, 255, 255, 0.55);
-            background-size: 250% 250%, 100% 100%;
-            background-position: 0% 50%, 0 0;
-            backdrop-filter: blur(22px) saturate(190%);
-            -webkit-backdrop-filter: blur(22px) saturate(190%);
-            border: 1px solid rgba(255, 255, 255, 0.65);
-            border-radius: 32px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 8px;
-            z-index: 100;
-            box-shadow:
-                0 16px 40px rgba(15, 23, 42, 0.16),
-                0 2px 6px rgba(15, 23, 42, 0.06),
-                inset 0 1px 1px rgba(255,255,255,0.9),
-                inset 0 -6px 14px rgba(255,255,255,0.25);
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            width: calc(100% - 40px); max-width: 390px; height: 72px;
+            background: linear-gradient(120deg, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0.08) 45%, rgba(255,255,255,0.35) 100%), rgba(255, 255, 255, 0.55);
+            background-size: 250% 250%, 100% 100%; background-position: 0% 50%, 0 0;
+            backdrop-filter: blur(22px) saturate(190%); -webkit-backdrop-filter: blur(22px) saturate(190%);
+            border: 1px solid rgba(255, 255, 255, 0.65); border-radius: 32px;
+            display: flex; justify-content: space-between; align-items: center; padding: 0 8px; z-index: 100;
+            box-shadow: 0 16px 40px rgba(15, 23, 42, 0.16), 0 2px 6px rgba(15, 23, 42, 0.06), inset 0 1px 1px rgba(255,255,255,0.9), inset 0 -6px 14px rgba(255,255,255,0.25);
             animation: navSheen 9s ease-in-out infinite;
         }
-        @keyframes navSheen {
-            0%, 100% { background-position: 0% 50%, 0 0; }
-            50% { background-position: 100% 50%, 0 0; }
-        }
+        @keyframes navSheen { 0%, 100% { background-position: 0% 50%, 0 0; } 50% { background-position: 100% 50%, 0 0; } }
 
-        /* The liquid blob that slides between tabs */
         .nav-indicator {
-            position: absolute;
-            top: 8px;
-            left: 8px;
-            height: 56px;
-            border-radius: 22px;
+            position: absolute; top: 8px; left: 8px; height: 56px; border-radius: 22px;
             background: rgba(255, 255, 255, 0.85);
-            box-shadow:
-                0 6px 14px rgba(15, 23, 42, 0.12),
-                inset 0 1px 2px rgba(255,255,255,1),
-                inset 0 -2px 4px rgba(15,23,42,0.04);
-            backdrop-filter: blur(6px);
-            -webkit-backdrop-filter: blur(6px);
+            box-shadow: 0 6px 14px rgba(15, 23, 42, 0.12), inset 0 1px 2px rgba(255,255,255,1), inset 0 -2px 4px rgba(15,23,42,0.04);
+            backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
             transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
-            z-index: 0;
-            pointer-events: none;
+            z-index: 0; pointer-events: none;
         }
         .nav-indicator.squish { animation: liquidSquish 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
         .nav-indicator.dragging { transition: none; }
@@ -220,7 +195,6 @@
             100% { transform: translateX(var(--nav-x, 0)) scaleX(1); }
         }
 
-        /* Tabs: icon-only when inactive, "open sideways" into icon+label when selected */
         .nav-item { position: relative; z-index: 1; display: flex; flex-direction: row; align-items: center; justify-content: center; color: #94a3b8; font-size: 0.72rem; font-weight: 600; gap: 0; flex: 1 1 0; height: 56px; margin: 0 2px; border-radius: 22px; cursor: pointer; transition: color 0.25s ease, flex-grow 0.45s cubic-bezier(0.34, 1.2, 0.64, 1); overflow: hidden; touch-action: none; }
         .nav-item i { font-size: 1.2rem; transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); }
         .nav-item .nav-label { display: inline-block; max-width: 0; opacity: 0; margin-left: 0; white-space: nowrap; overflow: hidden; transition: max-width 0.4s cubic-bezier(0.34, 1.2, 0.64, 1), opacity 0.25s ease 0.05s, margin-left 0.4s cubic-bezier(0.34, 1.2, 0.64, 1); }
@@ -239,7 +213,7 @@
         .qr-card img { width: 100%; max-width: 260px; display: block; }
         .close-btn { width: 100%; padding: 20px; background: linear-gradient(135deg, #ff4141 0%, #ff7343 100%); color: white; border: none; border-radius: 24px; font-size: 1.2rem; font-weight: 900; text-transform: uppercase; cursor: pointer; margin-top: auto;}
 
-        /* Custom Keypad / PIN Code Styling */
+        /* Custom Keypad */
         .pin-display { display: flex; gap: 16px; margin-top: 20px; margin-bottom: 40px; }
         .pin-dot { width: 18px; height: 18px; border-radius: 50%; border: 3px solid #cbd5e1; background: transparent; transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); }
         .pin-dot.filled { background: #0f172a; border-color: #0f172a; transform: scale(1.15); }
@@ -250,20 +224,38 @@
         .pin-btn.action-clear { background: #fee2e2; color: #ef4444; font-size: 1.3rem; }
         .pin-btn.action-close { background: #e2e8f0; color: #64748b; font-size: 1.3rem; }
         
-        /* Vibration Animation für falschen PIN */
         @keyframes shake {
             0%, 100% { transform: translateX(-50%) translateX(0); }
             20%, 60% { transform: translateX(-50%) translateX(-10px); }
             40%, 80% { transform: translateX(-50%) translateX(10px); }
         }
         .pin-modal.shake-shake { animation: shake 0.35s ease-in-out; }
+
+        /* EASTER EGG CSS */
+        .falling-profile {
+            position: fixed;
+            top: 0;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 10000;
+            pointer-events: none;
+            /* Start unsichtbar über dem Screen */
+            transform: translateY(-200px);
+            /* Bounce Kurve für realistisches Aufschlagen beim Stapeln */
+            transition: transform 1.2s cubic-bezier(0.34, 1.56, 0.64, 1); 
+        }
+        .falling-profile.drop-off {
+            /* Beschleunigender Fall nach unten, wenn der Stapel zusammenbricht */
+            transition: transform 0.8s cubic-bezier(0.55, 0.085, 0.68, 0.53); 
+        }
     </style>
 </head>
 <body>
 
-    <!-- Scroll Pills -->
+    <!-- Scroll Pills (Mit Easter Egg Onclick) -->
     <div id="scroll-pill-left" class="scroll-pill scroll-pill-left">Start</div>
-    <div id="scroll-pill-right" class="scroll-pill scroll-pill-right">
+    <div id="scroll-pill-right" class="scroll-pill scroll-pill-right" onclick="triggerProfileEasterEgg()">
         <img id="user-profile-pic" src="https://via.placeholder.com/42?text=?" alt="Profil">
     </div>
 
@@ -415,7 +407,7 @@
             <button class="close-btn" onclick="toggleUserQR(false)">Schließen</button>
         </div>
 
-        <!-- NEU: Keyboard / PIN Screen Modal -->
+        <!-- Keyboard / PIN Screen Modal -->
         <div id="pin-screen" class="pin-modal">
             <h2 style="font-size: 1.8rem; font-weight: 900; letter-spacing: -0.5px; text-transform: uppercase;">Admin Login</h2>
             <p style="color: var(--text-muted); font-size: 0.95rem; font-weight: 500; margin-top: 6px;">Gib den vierstelligen System-PIN ein</p>
@@ -443,7 +435,7 @@
             </div>
         </div>
 
-        <!-- Bottom Navbar (Jetzt 4 Items) -->
+        <!-- Bottom Navbar -->
         <nav class="bottom-nav" id="bottom-nav">
             <div class="nav-indicator" id="nav-indicator"></div>
             <div class="nav-item active" id="nav-start" onclick="switchTab('start')">
@@ -479,10 +471,9 @@
 
         let currentUser = null;
         let isAdmin = false;
-        let cachedUserTransactions = []; // für den CSV-Export der eigenen Historie
-        let currentPinBuffer = ""; // Puffer für das In-App PIN-Keyboard
+        let cachedUserTransactions = []; 
+        let currentPinBuffer = ""; 
 
-        // Exportiert die eigene Transaktionshistorie als CSV-Datei zum Download.
         function exportTransactionsCSV(filterType) {
             if (!currentUser) return alert("Zuerst anmelden!");
             const rows = cachedUserTransactions.filter(t => filterType === 'all' || t.type === filterType);
@@ -501,7 +492,7 @@
                 csvLines.push(line.join(';'));
             });
 
-            const csvContent = '\uFEFF' + csvLines.join('\r\n'); // BOM für korrekte Umlaute in Excel
+            const csvContent = '\uFEFF' + csvLines.join('\r\n');
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -513,7 +504,6 @@
             URL.revokeObjectURL(url);
         }
 
-        // Listener: Auth State
         auth.onAuthStateChanged(user => {
             currentUser = user;
             if(user) {
@@ -535,14 +525,10 @@
             auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(err => alert("Login Fehler: " + err.message));
         }
 
-        // --- Utils ---
         function sanitizeEmail(email) { return email.replace(/\./g, ','); }
         function unsanitizeEmail(email) { return email.replace(/,/g, '.'); }
-
         function escapeHtml(str) {
-            const div = document.createElement('div');
-            div.textContent = str == null ? '' : String(str);
-            return div.innerHTML;
+            const div = document.createElement('div'); div.textContent = str == null ? '' : String(str); return div.innerHTML;
         }
 
         function sanitizeAnnouncementHtml(dirtyHtml) {
@@ -555,8 +541,7 @@
                     if (child.nodeType === Node.ELEMENT_NODE) {
                         if (!allowedTags.has(child.tagName)) {
                             const text = document.createTextNode(child.textContent);
-                            child.replaceWith(text);
-                            return;
+                            child.replaceWith(text); return;
                         }
                         [...child.attributes].forEach(attr => child.removeAttribute(attr.name));
                         clean(child);
@@ -572,7 +557,6 @@
             return `${date.getDate()}.${date.getMonth()+1}.${date.getFullYear()} ${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
         }
 
-        // --- Live Updates (Meldungen & Balance) ---
         function startRealtimeListeners(user) {
             const safeEmail = sanitizeEmail(user.email);
             
@@ -632,7 +616,6 @@
 
             announcements.forEach((a, index) => {
                 const deleteBtnHtml = `<button class="announcement-delete-btn" onclick="deleteAnnouncement('${a.id}')" title="Meldung löschen"><i class="fa-solid fa-trash"></i></button>`;
-                
                 const html = `
                     <div class="announcement-card">
                         ${deleteBtnHtml}
@@ -648,31 +631,24 @@
             });
         });
 
-        // --- Custom PIN Keyboard Logic (Ersetzt die alte requestAdminAccess prompt) ---
         function requestAdminAccess() {
             if (!currentUser) return alert("Zuerst anmelden!");
             if (!isAdmin) return alert("Zugriff verweigert.");
-            
             togglePinScreen(true);
         }
 
         function togglePinScreen(show) {
             const pinScreen = document.getElementById('pin-screen');
             clearPinInput();
-            if (show) {
-                pinScreen.classList.add('open');
-            } else {
-                pinScreen.classList.remove('open');
-            }
+            if (show) pinScreen.classList.add('open');
+            else pinScreen.classList.remove('open');
         }
 
         function pressPinButton(num) {
             if (currentPinBuffer.length < 4) {
                 currentPinBuffer += num;
                 updatePinDotsUI();
-
                 if (currentPinBuffer.length === 4) {
-                    // Prüfen sobald 4 Ziffern getippt wurden
                     setTimeout(() => {
                         if (currentPinBuffer === "2014") {
                             togglePinScreen(false);
@@ -680,18 +656,10 @@
                             loadAdminLogs();
                             loadAdminUserList();
                         } else {
-                            // Fehlerzustand: UI schütteln & Punkte rot färben
                             const pinModal = document.getElementById('pin-screen');
                             pinModal.classList.add('shake-shake');
-                            
-                            for(let i=0; i<4; i++) {
-                                document.getElementById(`pin-dot-${i}`).classList.add('error');
-                            }
-                            
-                            setTimeout(() => {
-                                pinModal.classList.remove('shake-shake');
-                                clearPinInput();
-                            }, 500);
+                            for(let i=0; i<4; i++) document.getElementById(`pin-dot-${i}`).classList.add('error');
+                            setTimeout(() => { pinModal.classList.remove('shake-shake'); clearPinInput(); }, 500);
                         }
                     }, 200);
                 }
@@ -706,14 +674,11 @@
         function updatePinDotsUI() {
             for (let i = 0; i < 4; i++) {
                 const dot = document.getElementById(`pin-dot-${i}`);
-                dot.className = "pin-dot"; // reset error / filled
-                if (i < currentPinBuffer.length) {
-                    dot.classList.add('filled');
-                }
+                dot.className = "pin-dot";
+                if (i < currentPinBuffer.length) dot.classList.add('filled');
             }
         }
 
-        // --- Admin System-Funktionen ---
         function publishAnnouncement() {
             const title = document.getElementById('announce-title').value.trim();
             const rawContent = document.getElementById('announce-content').innerHTML.trim();
@@ -722,10 +687,7 @@
             const content = sanitizeAnnouncementHtml(rawContent);
 
             db.ref('announcements').push({
-                title: title,
-                content: content,
-                timestamp: Date.now(),
-                author: currentUser.email
+                title: title, content: content, timestamp: Date.now(), author: currentUser.email
             });
 
             alert("Meldung veröffentlicht!");
@@ -734,9 +696,7 @@
         }
 
         function deleteAnnouncement(id) {
-            if(confirm("Diese Meldung wirklich löschen?")) {
-                db.ref(`announcements/${id}`).remove();
-            }
+            if(confirm("Diese Meldung wirklich löschen?")) { db.ref(`announcements/${id}`).remove(); }
         }
 
         let cachedUsers = [];
@@ -747,12 +707,7 @@
                 snap.forEach(child => {
                     const safeEmail = child.key;
                     const data = (child.val() && child.val().data) || { balance: 0, spent: 0 };
-                    cachedUsers.push({
-                        safeEmail,
-                        email: unsanitizeEmail(safeEmail),
-                        balance: data.balance || 0,
-                        spent: data.spent || 0
-                    });
+                    cachedUsers.push({ safeEmail, email: unsanitizeEmail(safeEmail), balance: data.balance || 0, spent: data.spent || 0 });
                 });
                 cachedUsers.sort((a, b) => a.email.localeCompare(b.email));
                 const currentSearch = document.getElementById('user-search') ? document.getElementById('user-search').value : '';
@@ -789,33 +744,19 @@
 
             const periodId = Date.now();
             const archive = {};
-            cachedUsers.forEach(u => {
-                archive[u.safeEmail] = { balance: u.balance, spent: u.spent, email: u.email };
-            });
+            cachedUsers.forEach(u => { archive[u.safeEmail] = { balance: u.balance, spent: u.spent, email: u.email }; });
 
             try {
-                await db.ref(`history/${periodId}`).set({
-                    closedBy: currentUser.email,
-                    timestamp: periodId,
-                    users: archive
-                });
-
+                await db.ref(`history/${periodId}`).set({ closedBy: currentUser.email, timestamp: periodId, users: archive });
                 const updates = {};
-                cachedUsers.forEach(u => {
-                    updates[`users/${u.safeEmail}/data/balance`] = 0;
-                    updates[`users/${u.safeEmail}/data/spent`] = 0;
-                });
+                cachedUsers.forEach(u => { updates[`users/${u.safeEmail}/data/balance`] = 0; updates[`users/${u.safeEmail}/data/spent`] = 0; });
                 await db.ref().update(updates);
-
                 await db.ref('admin_logs').push({
                     admin: currentUser.email, target: 'ALLE NUTZER', action: 'period_close',
                     amount: cachedUsers.length, reason: `Zeitraum abgeschlossen (history/${periodId})`, timestamp: periodId
                 });
-
                 alert("Zeitraum archiviert und alle Guthaben zurückgesetzt.");
-            } catch (e) {
-                alert("Fehler beim Archivieren: " + e.message);
-            }
+            } catch (e) { alert("Fehler beim Archivieren: " + e.message); }
         }
 
         async function modifyUserBalance(actionType) {
@@ -830,11 +771,7 @@
             const dataRef = db.ref(`users/${safeTargetEmail}/data`);
 
             let existingSnap;
-            try {
-                existingSnap = await dataRef.get();
-            } catch (e) {
-                return alert("Fehler beim Prüfen des Nutzers: " + e.message);
-            }
+            try { existingSnap = await dataRef.get(); } catch (e) { return alert("Fehler beim Prüfen des Nutzers: " + e.message); }
             const userExists = existingSnap.exists();
             const currentBalance = userExists ? (existingSnap.val().balance || 0) : 0;
 
@@ -843,9 +780,7 @@
                 if (!create) return;
             }
 
-            const projectedBalance = actionType === 'add' ? currentBalance + amountInput
-                : actionType === 'sub' ? currentBalance - amountInput
-                : amountInput;
+            const projectedBalance = actionType === 'add' ? currentBalance + amountInput : actionType === 'sub' ? currentBalance - amountInput : amountInput;
             if (projectedBalance < 0) {
                 const proceed = confirm(`Achtung: Das Guthaben würde dadurch auf ${projectedBalance.toFixed(2).replace('.', ',')}€ (negativ) sinken.\nTrotzdem fortfahren?`);
                 if (!proceed) return;
@@ -867,10 +802,7 @@
                             reason: reasonInput || (actionType === 'add' ? 'Aufladung' : 'Abbuchung'), timestamp: timestamp
                         });
                     }
-                    db.ref('admin_logs').push({
-                        admin: currentUser.email, target: emailInput, action: actionType,
-                        amount: amountInput, reason: reasonInput, timestamp: timestamp
-                    });
+                    db.ref('admin_logs').push({ admin: currentUser.email, target: emailInput, action: actionType, amount: amountInput, reason: reasonInput, timestamp: timestamp });
                     alert("Erfolgreich!");
                     document.getElementById('target-amount').value = '';
                     document.getElementById('target-reason').value = '';
@@ -880,12 +812,8 @@
 
         function loadAdminLogs() {
             db.ref('admin_logs').orderByChild('timestamp').limitToLast(15).on('value', snap => {
-                const logList = document.getElementById('admin-log-list');
-                logList.innerHTML = '';
-                const logs = [];
-                snap.forEach(child => { logs.push(child.val()); });
-                logs.reverse();
-
+                const logList = document.getElementById('admin-log-list'); logList.innerHTML = '';
+                const logs = []; snap.forEach(child => { logs.push(child.val()); }); logs.reverse();
                 logs.forEach(log => {
                     logList.innerHTML += `
                         <div style="background:#f8fafc; padding:10px; border-radius:10px; border:1px solid #e2e8f0; margin-bottom:5px;">
@@ -897,7 +825,6 @@
             });
         }
 
-        // Scanner Logic
         let html5QrcodeScanner = null;
         let isScannerRunning = false;
         function toggleScanner() {
@@ -916,7 +843,6 @@
             }
         }
 
-        // --- UI Navigation (Pills & Tabs) ---
         const pillLeft = document.getElementById('scroll-pill-left');
         const pillRight = document.getElementById('scroll-pill-right');
         const mainNavItems = ['start', 'meldungen', 'einzahlungen', 'auszahlungen'];
@@ -931,10 +857,9 @@
             const navRect = nav.getBoundingClientRect();
             const itemRect = activeItem.getBoundingClientRect();
             const x = itemRect.left - navRect.left - 8;
-            const width = itemRect.width;
 
             indicator.style.setProperty('--nav-x', `${x}px`);
-            indicator.style.width = `${width}px`;
+            indicator.style.width = `${itemRect.width}px`;
             indicator.style.transform = `translateX(${x}px)`;
 
             indicator.classList.remove('squish');
@@ -956,9 +881,7 @@
                 const itemRect = activeItem.getBoundingClientRect();
                 indicator.style.width = `${itemRect.width}px`;
                 indicator.style.transform = `translateX(${itemRect.left - navRect.left - 8}px)`;
-                if (now - start < durationMs) {
-                    navSyncRaf = requestAnimationFrame(tick);
-                }
+                if (now - start < durationMs) { navSyncRaf = requestAnimationFrame(tick); }
             }
             navSyncRaf = requestAnimationFrame(tick);
         }
@@ -969,7 +892,6 @@
         });
         window.addEventListener('load', () => moveNavIndicator('nav-start'));
 
-        // --- Draggable liquid glass blob with rubber-band physics ---
         const navIdToTab = { 'nav-start': 'start', 'nav-meldungen': 'meldungen', 'nav-einzahlungen': 'einzahlungen', 'nav-auszahlungen': 'auszahlungen' };
         let navDrag = { active: false, moved: false, startX: 0, startTranslate: 0, pointerId: null };
         let suppressNextNavClick = false;
@@ -995,13 +917,9 @@
             nav.addEventListener('pointerdown', (e) => {
                 const item = e.target.closest('.nav-item');
                 if (!item || !item.classList.contains('active')) return;
-                navDrag.active = true;
-                navDrag.moved = false;
-                navDrag.startX = e.clientX;
-                navDrag.startTranslate = currentIndicatorTranslateX();
-                navDrag.pointerId = e.pointerId;
-                indicator.classList.add('dragging');
-                item.setPointerCapture(e.pointerId);
+                navDrag.active = true; navDrag.moved = false; navDrag.startX = e.clientX;
+                navDrag.startTranslate = currentIndicatorTranslateX(); navDrag.pointerId = e.pointerId;
+                indicator.classList.add('dragging'); item.setPointerCapture(e.pointerId);
             });
 
             nav.addEventListener('pointermove', (e) => {
@@ -1011,9 +929,7 @@
 
                 const { min, max } = getNavBounds();
                 let x = navDrag.startTranslate + dx;
-
-                const RUBBER = 0.3;
-                const MAX_OVERSCROLL = 26;
+                const RUBBER = 0.3; const MAX_OVERSCROLL = 26;
                 if (x < min) x = min - Math.min(MAX_OVERSCROLL, (min - x) * RUBBER);
                 if (x > max) x = max + Math.min(MAX_OVERSCROLL, (x - max) * RUBBER);
 
@@ -1023,37 +939,25 @@
 
             function endDrag(e) {
                 if (!navDrag.active || (e.pointerId !== undefined && e.pointerId !== navDrag.pointerId)) return;
-                navDrag.active = false;
-                indicator.classList.remove('dragging');
-
+                navDrag.active = false; indicator.classList.remove('dragging');
                 if (!navDrag.moved) return;
 
                 suppressNextNavClick = true;
-
-                const navRect = nav.getBoundingClientRect();
-                const indicatorRect = indicator.getBoundingClientRect();
+                const navRect = nav.getBoundingClientRect(); const indicatorRect = indicator.getBoundingClientRect();
                 const blobCenter = indicatorRect.left - navRect.left + indicatorRect.width / 2;
 
-                let closestId = 'nav-start';
-                let closestDist = Infinity;
+                let closestId = 'nav-start'; let closestDist = Infinity;
                 document.querySelectorAll('.nav-item').forEach(item => {
                     const r = item.getBoundingClientRect();
                     const center = r.left - navRect.left + r.width / 2;
                     const dist = Math.abs(center - blobCenter);
                     if (dist < closestDist) { closestDist = dist; closestId = item.id; }
                 });
-
                 switchTab(navIdToTab[closestId]);
             }
-            nav.addEventListener('pointerup', endDrag);
-            nav.addEventListener('pointercancel', endDrag);
-
+            nav.addEventListener('pointerup', endDrag); nav.addEventListener('pointercancel', endDrag);
             nav.addEventListener('click', (e) => {
-                if (suppressNextNavClick) {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    suppressNextNavClick = false;
-                }
+                if (suppressNextNavClick) { e.stopPropagation(); e.preventDefault(); suppressNextNavClick = false; }
             }, true);
         }
         window.addEventListener('load', initNavDrag);
@@ -1114,12 +1018,8 @@
             const indicator = document.getElementById('nav-indicator');
             const activeNavItem = document.querySelector('.nav-item.active');
             if (activeNavItem) {
-                indicator.style.opacity = '1';
-                moveNavIndicator(activeNavItem.id);
-                syncNavIndicatorWhileAnimating(activeNavItem.id);
-            } else {
-                indicator.style.opacity = '0';
-            }
+                indicator.style.opacity = '1'; moveNavIndicator(activeNavItem.id); syncNavIndicatorWhileAnimating(activeNavItem.id);
+            } else { indicator.style.opacity = '0'; }
 
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
@@ -1133,17 +1033,99 @@
                 qrScreen.classList.remove('open');
             }
         }
-// ... dein bestehender Script-Code ...
 
-// PWA Service Worker Registration
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js')
-            .then(reg => console.log('Service Worker registriert'))
-            .catch(err => console.log('Service Worker Fehler', err));
-    });
-}
+        // --- EASTER EGG LOGIK ---
+        function triggerProfileEasterEgg() {
+            // 1. Konfetti zünden (von den Seiten)
+            if (typeof confetti !== 'undefined') {
+                const duration = 3000;
+                const end = Date.now() + duration;
 
+                (function frame() {
+                    confetti({
+                        particleCount: 5, angle: 60, spread: 55, origin: { x: 0 },
+                        colors: ['#3b82f6', '#ff9233', '#16a34a', '#7028ff']
+                    });
+                    confetti({
+                        particleCount: 5, angle: 120, spread: 55, origin: { x: 1 },
+                        colors: ['#3b82f6', '#ff9233', '#16a34a', '#7028ff']
+                    });
+                    if (Date.now() < end) requestAnimationFrame(frame);
+                }());
+            }
+
+            // 2. Profilbilder regnen und stapeln lassen
+            const picSrc = document.getElementById('user-profile-pic').src;
+            const numPics = 45; 
+            const pics = [];
+            
+            // Logik, um den Bildschirm in "Spalten" einzuteilen (fürs Aufbauen des Haufens)
+            const binSize = 45; 
+            const numBins = Math.max(1, Math.floor(window.innerWidth / binSize));
+            const bins = new Array(numBins).fill(0); // Speichert die aktuelle Höhe pro Spalte
+
+            for (let i = 0; i < numPics; i++) {
+                setTimeout(() => {
+                    const img = document.createElement('img');
+                    img.src = picSrc;
+                    img.className = 'falling-profile';
+                    
+                    // Zufällige Größe (alle Größen, aber nicht zu groß: 30px bis 65px)
+                    const size = Math.floor(Math.random() * 35) + 30;
+                    img.style.width = size + 'px';
+                    img.style.height = size + 'px';
+                    
+                    // Finde zufällige Spalte und X-Position
+                    const binIndex = Math.floor(Math.random() * numBins);
+                    const randomX = (binIndex * binSize) + (Math.random() * (binSize - size/2));
+                    img.style.left = randomX + 'px';
+                    
+                    // Startposition setzen (Oben, außerhalb des Bildschirms)
+                    const initialRotation = Math.random() * 360;
+                    img.style.transform = `translateY(-200px) rotate(${initialRotation}deg)`;
+                    document.body.appendChild(img);
+                    
+                    // Ziel Y-Position berechnen (Boden minus bestehender Stapelhöhe in dieser Spalte)
+                    const bottomOffset = bins[binIndex];
+                    const targetY = window.innerHeight - bottomOffset - size;
+                    
+                    // Stapelhöhe für diese Spalte erhöhen, damit das nächste Bild weiter oben landet
+                    bins[binIndex] += (size * 0.6); // 0.6 macht, dass sie sich schön überlappen
+                    
+                    // Browser zum neu Berechnen zwingen (Reflow)
+                    void img.offsetWidth;
+                    
+                    // Bild nach unten animieren
+                    const endRotation = initialRotation + Math.random() * 360;
+                    img.style.transform = `translateY(${targetY}px) rotate(${endRotation}deg)`;
+                    
+                    pics.push(img);
+                }, i * 60); // Jedes Bild spawnt leicht verzögert
+            }
+
+            // 3. Nach einigen Sekunden: Stapel nacheinander einstürzen lassen
+            setTimeout(() => {
+                pics.forEach((img, index) => {
+                    setTimeout(() => {
+                        img.classList.add('drop-off'); // Fall-Kurve ändern (wird nach unten beschleunigt)
+                        const currentRotation = img.style.transform.split('rotate(')[1];
+                        img.style.transform = `translateY(${window.innerHeight + 200}px) rotate(${currentRotation}`; 
+                        
+                        // Element aus dem DOM löschen, nachdem es unsichtbar ist
+                        setTimeout(() => img.remove(), 1000);
+                    }, index * 40); // Nacheinander (Dominosteine-Effekt) abräumen
+                });
+            }, 5500); // Wartet bis alle gefallen und aufgestapelt sind
+        }
+
+        // PWA Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(reg => console.log('Service Worker registriert'))
+                    .catch(err => console.log('Service Worker Fehler', err));
+            });
+        }
     </script>
 </body>
 </html>
