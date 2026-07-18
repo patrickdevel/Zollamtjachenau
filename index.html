@@ -14,6 +14,9 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
+    <!-- QR Code Scanner Lib -->
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+
     <style>
         :root {
             --bg-color: #f8fafc;
@@ -55,31 +58,50 @@
             padding-bottom: 100px;
         }
 
-        /* Scroll Pill */
+        /* Scroll Pills */
         .scroll-pill {
             position: fixed;
             top: 20px;
-            left: 20px;
             z-index: 150;
-            padding: 8px 16px;
-            background: rgba(255, 255, 255, 0.7);
+            background: rgba(255, 255, 255, 0.85);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.5);
             border-radius: 50px;
-            font-size: 0.8rem;
-            font-weight: 700;
             color: var(--text-main);
             opacity: 0;
             visibility: hidden;
             transition: opacity 0.3s ease, visibility 0.3s ease;
             pointer-events: none;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .scroll-pill.visible {
             opacity: 1;
             visibility: visible;
+        }
+
+        .scroll-pill-left {
+            left: 20px;
+            padding: 12px 24px;
+            font-size: 1.05rem;
+            font-weight: 800;
+        }
+
+        .scroll-pill-right {
+            right: 20px;
+            padding: 4px;
+        }
+
+        .scroll-pill-right img {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid white;
         }
 
         /* Header Styles */
@@ -121,7 +143,7 @@
         .trans-date { font-size: 0.8rem; color: var(--text-muted); font-weight: 500; text-align: right; }
         .empty-state { text-align: center; color: var(--text-muted); padding: 20px; font-size: 0.9rem; background: rgba(255,255,255,0.5); border-radius: 20px; border: 1px dashed #cbd5e1; }
 
-        /* Admin Formular */
+        /* Admin Formular & Scanner */
         .admin-form { background: white; padding: 24px; border-radius: 24px; box-shadow: 0 10px 20px rgba(0,0,0,0.05); border: 1px solid #f1f5f9; display: flex; flex-direction: column; gap: 16px; }
         .admin-form input, .admin-form select { padding: 16px; border-radius: 12px; border: 1px solid #cbd5e1; font-size: 1rem; outline: none; transition: border-color 0.2s; font-family: 'Inter', sans-serif;}
         .admin-form input:focus, .admin-form select:focus { border-color: #3b82f6; }
@@ -131,6 +153,11 @@
         .admin-btn.add { background: #16a34a; }
         .admin-btn.sub { background: #dc2626; }
         .admin-btn.set { background: #0f172a; flex-basis: 100%;}
+        
+        .scan-trigger-btn { background: #3b82f6; color: white; border: none; padding: 16px; border-radius: 12px; font-weight: bold; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 10px; transition: transform 0.2s; }
+        .scan-trigger-btn:active { transform: scale(0.97); }
+        #qr-reader-container { display: none; width: 100%; overflow: hidden; border-radius: 12px; border: 2px solid #3b82f6; }
+        #qr-reader { width: 100%; }
         
         .hidden-admin-trigger { text-align: center; margin-top: 20px; font-size: 0.8rem; color: #cbd5e1; cursor: pointer; padding: 10px; }
 
@@ -146,7 +173,7 @@
         .nav-item.active { color: var(--text-main); }
         .nav-item.active i { transform: translateY(-2px); color: #0f172a; }
 
-        /* QR-Code Modal */
+        /* QR-Code Modal (Nutzer Seite) */
         .qr-modal { position: fixed; top: 0; left: 50%; transform: translateX(-50%) translateY(100%); width: 100%; max-width: 430px; height: 100%; background: #f1f5f9; z-index: 200; transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); display: flex; flex-direction: column; align-items: center; padding: 40px 24px 120px 24px; }
         .qr-modal.open { transform: translateX(-50%) translateY(0); }
         .qr-modal h2 { font-size: 2rem; font-weight: 900; letter-spacing: -0.5px; text-transform: uppercase; margin-top: 20px; margin-bottom: 40px; text-align: center; }
@@ -158,7 +185,11 @@
 </head>
 <body>
 
-    <div id="scroll-pill" class="scroll-pill">Start</div>
+    <!-- Scroll Pills (Groß, Links Name, Rechts Profilbild) -->
+    <div id="scroll-pill-left" class="scroll-pill scroll-pill-left">Start</div>
+    <div id="scroll-pill-right" class="scroll-pill scroll-pill-right">
+        <img id="user-profile-pic" src="https://via.placeholder.com/42?text=?" alt="Profil">
+    </div>
 
     <div class="app-container">
         
@@ -200,7 +231,6 @@
         <!-- VIEW 2: EINZAHLUNGEN -->
         <div id="view-einzahlungen" class="view">
             <div class="transaction-list" id="inflow-list">
-                <!-- Wird live über Firebase generiert -->
                 <div class="empty-state">Noch keine Einzahlungen vorhanden.</div>
             </div>
         </div>
@@ -208,7 +238,6 @@
         <!-- VIEW 3: AUSZAHLUNGEN -->
         <div id="view-auszahlungen" class="view">
             <div class="transaction-list" id="outflow-list">
-                <!-- Wird live über Firebase generiert -->
                 <div class="empty-state">Noch keine Auszahlungen vorhanden.</div>
             </div>
         </div>
@@ -216,8 +245,15 @@
         <!-- VIEW 4: ADMIN -->
         <div id="view-admin" class="view">
             <p class="section-label">Guthaben verwalten</p>
+            
             <div class="admin-form">
-                <input type="email" id="target-user" placeholder="E-Mail des Nutzers">
+                <!-- QR Code Scanner -->
+                <button class="scan-trigger-btn" id="start-scan-btn" onclick="toggleScanner()"><i class="fa-solid fa-camera"></i> Nutzer QR scannen</button>
+                <div id="qr-reader-container">
+                    <div id="qr-reader"></div>
+                </div>
+
+                <input type="email" id="target-user" placeholder="E-Mail des Nutzers (Scan füllt das aus)">
                 <input type="text" id="target-reason" placeholder="Grund / Beschreibung (optional)">
                 <input type="number" id="target-amount" placeholder="Betrag in € (z.B. 10.50)" step="0.01">
                 
@@ -234,16 +270,19 @@
             </div>
         </div>
 
-        <div class="qr-floating-btn" onclick="toggleQR(true)">
+        <!-- Floating Button für den Nutzer-QR-Code -->
+        <div class="qr-floating-btn" onclick="toggleUserQR(true)">
             <i class="fa-solid fa-qrcode"></i>
         </div>
 
+        <!-- Overlay für den eigenen QR Code -->
         <div id="qr-screen" class="qr-modal">
             <h2>Dein QR-Code</h2>
             <div class="qr-card">
                 <img id="qr-image" src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=Anmelden-Um-QR-Zu-Sehen" alt="QR Code">
             </div>
-            <button class="close-btn" onclick="toggleQR(false)">Schließen</button>
+            <p style="margin-top: 15px; color: var(--text-muted); text-align: center;">Zeige diesen Code beim Admin vor.</p>
+            <button class="close-btn" onclick="toggleUserQR(false)">Schließen</button>
         </div>
 
         <nav class="bottom-nav">
@@ -288,23 +327,27 @@
                     <span>Eingeloggt als ${user.displayName.split(' ')[0]}</span>
                     <div class="btn-arrow"><i class="fa-solid fa-check"></i></div>
                 `;
-                document.getElementById('auth-btn').style.background = "#16a34a"; // Grün
+                document.getElementById('auth-btn').style.background = "#16a34a";
                 document.getElementById('header-main').innerText = `Hey, ${user.displayName.split(' ')[0]}!`;
                 
-                // QR Code updaten
+                // Profilbild für die rechte Pill setzen (Fallback, falls keines da ist)
+                if(user.photoURL) {
+                    document.getElementById('user-profile-pic').src = user.photoURL;
+                }
+
+                // Generiere QR Code mit der Email des Nutzers
                 document.getElementById('qr-image').src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(user.email)}`;
                 
                 startRealtimeListeners(user);
             }
         });
 
-        // --- 2. Login ---
         function loginWithGoogle() {
             const provider = new firebase.auth.GoogleAuthProvider();
             auth.signInWithPopup(provider).catch(err => alert("Login Fehler: " + err.message));
         }
 
-        // --- 3. Admin Bereich Auth ---
+        // --- 2. Admin Bereich Auth ---
         function requestAdminAccess() {
             if (!currentUser) return alert("Du musst dich zuerst anmelden!");
             if (currentUser.email !== 'patrick.x.roth@gmail.com') return alert("Zugriff verweigert. Nur für Admin.");
@@ -319,7 +362,7 @@
         }
 
         function sanitizeEmail(email) {
-            return email.replace(/\./g, ','); // Firebase erlaubt keine Punkte in Keys
+            return email.replace(/\./g, ',');
         }
 
         function formatDate(timestamp) {
@@ -327,52 +370,42 @@
             return `${date.getDate()}.${date.getMonth()+1}.${date.getFullYear()} ${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
         }
 
-        // --- 4. Live Updates für den normalen User ---
+        // --- 3. Live Updates (User) ---
         function startRealtimeListeners(user) {
             const safeEmail = sanitizeEmail(user.email);
             
-            // 4a. Balance & Spent Listener
             db.ref(`users/${safeEmail}/data`).on('value', snap => {
                 const data = snap.val() || { balance: 0, spent: 0 };
-                const bal = data.balance || 0;
-                const spent = data.spent || 0;
-                
-                document.getElementById('user-balance').innerText = bal.toFixed(2).replace('.', ',') + "€";
-                document.getElementById('extra-info').innerText = "Gesamt ausgegeben: " + spent.toFixed(2).replace('.', ',') + "€";
+                document.getElementById('user-balance').innerText = (data.balance || 0).toFixed(2).replace('.', ',') + "€";
+                document.getElementById('extra-info').innerText = "Gesamt ausgegeben: " + (data.spent || 0).toFixed(2).replace('.', ',') + "€";
             });
 
-            // 4b. Transaction Listener
             db.ref(`users/${safeEmail}/transactions`).orderByChild('timestamp').on('value', snap => {
                 const inflowList = document.getElementById('inflow-list');
                 const outflowList = document.getElementById('outflow-list');
-                inflowList.innerHTML = '';
-                outflowList.innerHTML = '';
+                inflowList.innerHTML = ''; outflowList.innerHTML = '';
                 
                 let hasIn = false; let hasOut = false;
                 const transactions = [];
                 snap.forEach(child => { transactions.push(child.val()); });
-                transactions.reverse(); // Neueste zuerst
+                transactions.reverse();
 
                 transactions.forEach(t => {
                     const isPlus = t.type === 'inflow';
                     const iconClass = isPlus ? 'fa-arrow-trend-up' : 'fa-arrow-trend-down';
                     const colorClass = isPlus ? 'inflow' : 'outflow';
-                    const typeText = isPlus ? 'Eingehend' : 'Ausgehend';
-                    const reasonText = t.reason ? ` - ${t.reason}` : '';
-                    
                     const html = `
                         <div class="transaction-item ${colorClass}">
                             <div class="trans-icon-info">
                                 <div class="trans-icon"><i class="fa-solid ${iconClass}"></i></div>
                                 <div class="trans-details">
                                     <div class="trans-title">${t.amount.toFixed(2).replace('.', ',')}€</div>
-                                    <div class="trans-type">${typeText}${reasonText}</div>
+                                    <div class="trans-type">${isPlus?'Eingehend':'Ausgehend'}${t.reason ? ` - ${t.reason}` : ''}</div>
                                 </div>
                             </div>
                             <div class="trans-date">${formatDate(t.timestamp)}</div>
                         </div>
                     `;
-                    
                     if (isPlus) { inflowList.innerHTML += html; hasIn = true; } 
                     else { outflowList.innerHTML += html; hasOut = true; }
                 });
@@ -382,7 +415,41 @@
             });
         }
 
-        // --- 5. Admin Logik ---
+        // --- 4. Admin Logik & Scanner ---
+        let html5QrcodeScanner = null;
+        let isScannerRunning = false;
+
+        function toggleScanner() {
+            const container = document.getElementById('qr-reader-container');
+            const btn = document.getElementById('start-scan-btn');
+
+            if(isScannerRunning) {
+                if(html5QrcodeScanner) html5QrcodeScanner.stop();
+                container.style.display = 'none';
+                btn.innerHTML = '<i class="fa-solid fa-camera"></i> Nutzer QR scannen';
+                isScannerRunning = false;
+            } else {
+                container.style.display = 'block';
+                btn.innerHTML = '<i class="fa-solid fa-xmark"></i> Scanner beenden';
+                isScannerRunning = true;
+                
+                html5QrcodeScanner = new Html5Qrcode("qr-reader");
+                html5QrcodeScanner.start(
+                    { facingMode: "environment" }, 
+                    { fps: 10, qrbox: { width: 250, height: 250 } },
+                    (decodedText) => {
+                        // Erfolgreich gescannt
+                        document.getElementById('target-user').value = decodedText;
+                        toggleScanner(); // Scanner wieder zu
+                    },
+                    (err) => { /* Ignorieren */ }
+                ).catch(err => {
+                    alert("Kamerafehler: " + err);
+                    toggleScanner();
+                });
+            }
+        }
+
         function modifyUserBalance(actionType) {
             const emailInput = document.getElementById('target-user').value.trim();
             const reasonInput = document.getElementById('target-reason').value.trim();
@@ -397,43 +464,24 @@
             
             dataRef.transaction(currentData => {
                 let data = currentData || { balance: 0, spent: 0 };
-                
-                if (actionType === 'add') {
-                    data.balance += amountInput;
-                } else if (actionType === 'sub') {
-                    data.balance -= amountInput;
-                    data.spent += amountInput; // Ausgaben erhöhen
-                } else if (actionType === 'set') {
-                    data.balance = amountInput; 
-                    // Set ändert 'spent' nicht automatisch, da es ein hard-override ist.
-                }
+                if (actionType === 'add') data.balance += amountInput;
+                else if (actionType === 'sub') { data.balance -= amountInput; data.spent += amountInput; }
+                else if (actionType === 'set') data.balance = amountInput; 
                 return data;
             }, (error, committed) => {
-                if (error) {
-                    alert("Datenbank-Fehler: " + error.message);
-                } else if (committed) {
+                if (error) alert("Fehler: " + error.message);
+                else if (committed) {
                     const timestamp = Date.now();
-                    
-                    // Nur loggen, wenn add oder sub (bei Set ist es ein hard-override ohne history-eintrag für den user, außer du willst es)
                     if(actionType === 'add' || actionType === 'sub') {
                         db.ref(`users/${safeTargetEmail}/transactions`).push({
-                            amount: amountInput,
-                            type: actionType === 'add' ? 'inflow' : 'outflow',
-                            reason: reasonInput || (actionType === 'add' ? 'Aufladung' : 'Abbuchung'),
-                            timestamp: timestamp
+                            amount: amountInput, type: actionType === 'add' ? 'inflow' : 'outflow',
+                            reason: reasonInput || (actionType === 'add' ? 'Aufladung' : 'Abbuchung'), timestamp: timestamp
                         });
                     }
-
-                    // Admin Global Log
                     db.ref('admin_logs').push({
-                        admin: currentUser.email,
-                        target: emailInput,
-                        action: actionType,
-                        amount: amountInput,
-                        reason: reasonInput,
-                        timestamp: timestamp
+                        admin: currentUser.email, target: emailInput, action: actionType,
+                        amount: amountInput, reason: reasonInput, timestamp: timestamp
                     });
-
                     alert("Erfolgreich ausgeführt!");
                     document.getElementById('target-amount').value = '';
                     document.getElementById('target-reason').value = '';
@@ -441,7 +489,6 @@
             });
         }
 
-        // Lädt Admin Logs (wer hat wem was gebucht)
         function loadAdminLogs() {
             db.ref('admin_logs').orderByChild('timestamp').limitToLast(15).on('value', snap => {
                 const logList = document.getElementById('admin-log-list');
@@ -462,17 +509,20 @@
             });
         }
 
-        // --- 6. UI Navigation ---
-        const scrollPill = document.getElementById('scroll-pill');
+        // --- 5. UI Navigation (Pills & Tabs) ---
+        const pillLeft = document.getElementById('scroll-pill-left');
+        const pillRight = document.getElementById('scroll-pill-right');
         let currentViewName = 'Start';
 
         window.addEventListener('scroll', () => {
-            scrollPill.classList.toggle('visible', window.scrollY > 50);
+            const isScrolled = window.scrollY > 50;
+            pillLeft.classList.toggle('visible', isScrolled);
+            pillRight.classList.toggle('visible', isScrolled);
         });
 
         function switchTab(tabName) {
-            document.querySelectorAll('.view').forEach(view => view.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
             
             const subTitle = document.getElementById('header-sub');
             const mainTitle = document.getElementById('header-main');
@@ -481,47 +531,35 @@
             if(tabName === 'start') {
                 document.getElementById('view-start').classList.add('active');
                 document.getElementById('nav-start').classList.add('active');
-                subTitle.style.display = 'block';
-                mainTitle.innerText = currentUser ? `Hey, ${currentUser.displayName.split(' ')[0]}!` : 'Hey!';
-                extraInfo.style.display = 'none';
-                currentViewName = 'Start';
+                subTitle.style.display = 'block'; mainTitle.innerText = currentUser ? `Hey, ${currentUser.displayName.split(' ')[0]}!` : 'Hey!';
+                extraInfo.style.display = 'none'; currentViewName = 'Start';
             } 
             else if(tabName === 'einzahlungen') {
                 document.getElementById('view-einzahlungen').classList.add('active');
                 document.getElementById('nav-einzahlungen').classList.add('active');
-                subTitle.style.display = 'none';
-                mainTitle.innerText = 'Einzahlungen';
-                extraInfo.style.display = 'none';
-                currentViewName = 'Einzahlungen';
+                subTitle.style.display = 'none'; mainTitle.innerText = 'Einzahlungen';
+                extraInfo.style.display = 'none'; currentViewName = 'Einzahlungen';
             } 
             else if(tabName === 'auszahlungen') {
                 document.getElementById('view-auszahlungen').classList.add('active');
                 document.getElementById('nav-auszahlungen').classList.add('active');
-                subTitle.style.display = 'none';
-                mainTitle.innerText = 'Auszahlungen';
-                extraInfo.style.display = 'inline-block';
-                currentViewName = 'Auszahlungen';
+                subTitle.style.display = 'none'; mainTitle.innerText = 'Auszahlungen';
+                extraInfo.style.display = 'inline-block'; currentViewName = 'Auszahlungen';
             }
             else if(tabName === 'admin') {
                 document.getElementById('view-admin').classList.add('active');
-                subTitle.style.display = 'block';
-                subTitle.innerText = 'Admin Interface';
-                mainTitle.innerText = 'System';
-                extraInfo.style.display = 'none';
-                currentViewName = 'Admin';
+                subTitle.style.display = 'block'; subTitle.innerText = 'Admin Interface'; mainTitle.innerText = 'System';
+                extraInfo.style.display = 'none'; currentViewName = 'Admin';
             }
 
-            scrollPill.innerText = currentViewName;
+            pillLeft.innerText = currentViewName;
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        function toggleQR(show) {
+        function toggleUserQR(show) {
             const qrScreen = document.getElementById('qr-screen');
             if (show) {
-                if(!currentUser) {
-                    alert("Du musst eingeloggt sein, um deinen QR Code zu sehen.");
-                    return;
-                }
+                if(!currentUser) return alert("Du musst eingeloggt sein, um deinen QR Code zu sehen.");
                 qrScreen.classList.add('open');
             } else {
                 qrScreen.classList.remove('open');
