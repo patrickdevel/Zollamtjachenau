@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -153,6 +152,7 @@
         .btn-purple { background: var(--gradient-btn-2); }
         .btn-blue { background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%); } 
         .btn-arrow { width: 40px; height: 40px; background: rgba(255, 255, 255, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .action-btn:disabled, .admin-btn:disabled, .scan-trigger-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important; }
 
         /* Lists */
         .transaction-list, .announcement-list { display: flex; flex-direction: column; gap: 12px; }
@@ -165,6 +165,8 @@
         .trans-details .trans-type { font-size: 0.8rem; color: var(--text-muted); }
         .trans-date { font-size: 0.8rem; color: var(--text-muted); font-weight: 500; text-align: right; }
         .empty-state { text-align: center; color: var(--text-muted); padding: 20px; font-size: 0.9rem; background: var(--empty-state-bg); border-radius: 20px; border: 1px dashed var(--input-border); transition: background 0.3s; }
+        .load-more-btn { width: 100%; padding: 14px; border-radius: 16px; border: 1px dashed var(--input-border); background: var(--empty-state-bg); color: var(--text-main); font-weight: 700; cursor: pointer; font-size: 0.9rem; }
+        .load-more-btn:active { transform: scale(0.98); }
 
         /* Announcements Cards */
         .announcement-card { background: var(--item-bg); border-radius: 20px; padding: 16px; border: 1px solid var(--border-color); box-shadow: var(--shadow); position: relative; transition: background 0.3s;}
@@ -211,11 +213,17 @@
             position: fixed; bottom: 116px; left: 50%; transform: translateX(130px); width: 56px; height: 56px; background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.4rem; box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4); cursor: pointer; z-index: 99; 
             transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease; 
         }
-        .qr-floating-btn:hover { transform: translateX(130px) scale(1.15); box-shadow: 0 14px 35px rgba(59, 130, 246, 0.6); }
+        @media (hover: hover) {
+            .qr-floating-btn:hover { transform: translateX(130px) scale(1.15); box-shadow: 0 14px 35px rgba(59, 130, 246, 0.6); }
+        }
         .qr-floating-btn:active { transform: translateX(130px) scale(0.9); }
         @media(max-width: 430px) { 
             .qr-floating-btn { left: auto; right: 20px; transform: none; } 
+        }
+        @media (hover: hover) and (max-width: 430px) {
             .qr-floating-btn:hover { transform: scale(1.15); }
+        }
+        @media(max-width: 430px) {
             .qr-floating-btn:active { transform: scale(0.9); }
         }
 
@@ -259,6 +267,9 @@
         .qr-modal h2 { font-size: 2rem; font-weight: 900; margin-top: 20px; margin-bottom: 40px; text-transform: uppercase; color: var(--text-main);}
         .qr-card { background: white; padding: 24px; border-radius: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.15); }
         .qr-card img { width: 100%; max-width: 260px; display: block; }
+
+        .logout-link-btn { width: 100%; padding: 16px; background: var(--item-bg); color: var(--outflow-text); border: 1px solid var(--border-color); border-radius: 16px; font-size: 0.95rem; font-weight: 700; cursor: pointer; margin-top: 12px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .logout-link-btn:active { transform: scale(0.97); }
         
         .close-btn { 
             width: 100%; padding: 20px; background: linear-gradient(135deg, #ff4141 0%, #ff7343 100%); color: white; border: none; border-radius: 24px; font-size: 1.2rem; font-weight: 900; text-transform: uppercase; cursor: pointer; margin-top: auto;
@@ -277,6 +288,16 @@
         .pin-btn:active { transform: scale(0.9); opacity: 0.8; }
         .pin-btn.action-clear { background: var(--outflow-bg); color: var(--outflow-text); font-size: 1.3rem; }
         .pin-btn.action-close { background: var(--bg-color); color: var(--text-muted); font-size: 1.3rem; }
+
+        /* PIN shake animation (was missing) */
+        @keyframes shakeShake {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            20% { transform: translateX(-50%) translateX(-10px); }
+            40% { transform: translateX(-50%) translateX(10px); }
+            60% { transform: translateX(-50%) translateX(-8px); }
+            80% { transform: translateX(-50%) translateX(8px); }
+        }
+        .pin-modal.shake-shake { animation: shakeShake 0.4s ease-in-out; }
         
         /* Easter Egg */
         .falling-profile { position: fixed; top: 0; border-radius: 50%; border: 2px solid white; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 10000; pointer-events: none; transform: translateY(-200px); transition: transform 1.2s cubic-bezier(0.34, 1.56, 0.64, 1); }
@@ -284,9 +305,46 @@
         
         /* Chart Container */
         .chart-container { position: relative; width: 100%; height: 250px; margin-top: 10px; }
+
+        /* Toast notifications (replaces alert()) */
+        .toast-container { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); width: 100%; max-width: 400px; padding: 0 16px; z-index: 500; display: flex; flex-direction: column; gap: 10px; align-items: center; pointer-events: none; }
+        .toast { pointer-events: auto; width: 100%; max-width: 380px; background: var(--item-bg); color: var(--text-main); border: 1px solid var(--border-color); box-shadow: 0 10px 30px rgba(0,0,0,0.15); border-radius: 16px; padding: 14px 16px; font-size: 0.9rem; font-weight: 600; display: flex; align-items: center; gap: 10px; opacity: 0; transform: translateY(-20px) scale(0.95); transition: opacity 0.3s cubic-bezier(0.34,1.56,0.64,1), transform 0.3s cubic-bezier(0.34,1.56,0.64,1); }
+        .toast.show { opacity: 1; transform: translateY(0) scale(1); }
+        .toast i { font-size: 1.1rem; flex-shrink: 0; }
+        .toast.toast-success i { color: var(--inflow-text); }
+        .toast.toast-error i { color: var(--outflow-text); }
+        .toast.toast-info i { color: #3b82f6; }
+
+        /* Confirm modal (replaces confirm()) */
+        .confirm-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 600; display: flex; align-items: center; justify-content: center; opacity: 0; visibility: hidden; transition: opacity 0.25s ease, visibility 0.25s ease; padding: 24px; }
+        .confirm-overlay.open { opacity: 1; visibility: visible; }
+        .confirm-box { background: var(--item-bg); color: var(--text-main); border-radius: 24px; padding: 26px; width: 100%; max-width: 340px; box-shadow: 0 20px 50px rgba(0,0,0,0.25); transform: scale(0.9); transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1); }
+        .confirm-overlay.open .confirm-box { transform: scale(1); }
+        .confirm-title { font-weight: 800; font-size: 1.1rem; margin-bottom: 8px; }
+        .confirm-message { font-size: 0.9rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 20px; white-space: pre-line; }
+        .confirm-actions { display: flex; gap: 10px; }
+        .confirm-actions button { flex: 1; padding: 14px; border: none; border-radius: 14px; font-weight: 700; cursor: pointer; font-size: 0.95rem; }
+        .confirm-cancel-btn { background: var(--bg-color); color: var(--text-main); }
+        .confirm-ok-btn { background: #dc2626; color: white; }
+        .confirm-ok-btn.neutral { background: #3b82f6; }
     </style>
 </head>
 <body>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- Confirm Modal -->
+    <div class="confirm-overlay" id="confirm-overlay">
+        <div class="confirm-box">
+            <div class="confirm-title" id="confirm-title">Bist du sicher?</div>
+            <div class="confirm-message" id="confirm-message"></div>
+            <div class="confirm-actions">
+                <button class="confirm-cancel-btn" id="confirm-cancel-btn">Abbrechen</button>
+                <button class="confirm-ok-btn" id="confirm-ok-btn">Bestätigen</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Scroll Pills (Mit Easter Egg Onclick) -->
     <div id="scroll-pill-left" class="scroll-pill scroll-pill-left">Start</div>
@@ -302,7 +360,7 @@
                 <h1 class="main-title" id="header-main">Hey!</h1>
             </div>
             <!-- Neuer Dark Mode Button -->
-            <button class="theme-toggle-btn" onclick="toggleTheme()" id="theme-btn-icon">
+            <button class="theme-toggle-btn" onclick="toggleTheme()" id="theme-btn-icon" aria-label="Design umschalten (Hell/Dunkel)">
                 <i class="fa-solid fa-moon"></i>
             </button>
         </header>
@@ -342,6 +400,11 @@
 
             <!-- Geheimer Admin Button -->
             <div class="hidden-admin-trigger" onclick="requestAdminAccess()">Admin Zugang</div>
+
+            <!-- Logout -->
+            <button class="logout-link-btn" id="logout-btn" style="display:none;" onclick="logoutUser()" aria-label="Abmelden">
+                <i class="fa-solid fa-right-from-bracket"></i> Abmelden
+            </button>
         </div>
 
         <!-- VIEW 2: MELDUNGEN -->
@@ -361,6 +424,7 @@
             <div class="transaction-list" id="inflow-list">
                 <div class="empty-state">Lade Einzahlungen...</div>
             </div>
+            <button class="load-more-btn" id="inflow-load-more" style="display:none;" onclick="showMoreTransactions('inflow')">Mehr anzeigen</button>
         </div>
 
         <!-- VIEW 4: AUSZAHLUNGEN -->
@@ -372,6 +436,7 @@
             <div class="transaction-list" id="outflow-list">
                 <div class="empty-state">Lade Auszahlungen...</div>
             </div>
+            <button class="load-more-btn" id="outflow-load-more" style="display:none;" onclick="showMoreTransactions('outflow')">Mehr anzeigen</button>
         </div>
 
         <!-- VIEW 5: ADMIN -->
@@ -381,6 +446,14 @@
             <div class="admin-form">
                 <div class="chart-container">
                     <canvas id="adminChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Zeitverlauf Chart -->
+            <p class="section-label">Aktivität über Zeit (letzte Buchungen)</p>
+            <div class="admin-form">
+                <div class="chart-container">
+                    <canvas id="adminHistoryChart"></canvas>
                 </div>
             </div>
 
@@ -397,7 +470,7 @@
                     </div>
                     <div id="announce-content" contenteditable="true" class="editor-area" placeholder="Schreibe hier die Meldung..."></div>
                 </div>
-                <button class="admin-btn add" style="width: 100%;" onclick="publishAnnouncement()"><i class="fa-solid fa-paper-plane"></i> Meldung posten</button>
+                <button class="admin-btn add" style="width: 100%;" id="publish-announce-btn" onclick="publishAnnouncement()"><i class="fa-solid fa-paper-plane"></i> Meldung posten</button>
             </div>
 
             <!-- Geld verwalten -->
@@ -408,12 +481,12 @@
 
                 <input type="email" id="target-user" placeholder="E-Mail des Nutzers (Scan füllt aus)">
                 <input type="text" id="target-reason" placeholder="Grund / Beschreibung (optional)">
-                <input type="number" id="target-amount" placeholder="Betrag in € (z.B. 10.50)" step="0.01">
+                <input type="number" id="target-amount" placeholder="Betrag in € (z.B. 10.50)" step="0.01" min="0">
                 
                 <div class="admin-btn-group">
-                    <button class="admin-btn add" onclick="modifyUserBalance('add')"><i class="fa-solid fa-plus"></i> Hinzufügen</button>
-                    <button class="admin-btn sub" onclick="modifyUserBalance('sub')"><i class="fa-solid fa-minus"></i> Abbuchen</button>
-                    <button class="admin-btn set" onclick="modifyUserBalance('set')"><i class="fa-solid fa-pen"></i> Guthaben exakt setzen</button>
+                    <button class="admin-btn add" id="btn-add-balance" onclick="modifyUserBalance('add')"><i class="fa-solid fa-plus"></i> Hinzufügen</button>
+                    <button class="admin-btn sub" id="btn-sub-balance" onclick="modifyUserBalance('sub')"><i class="fa-solid fa-minus"></i> Abbuchen</button>
+                    <button class="admin-btn set" id="btn-set-balance" onclick="modifyUserBalance('set')"><i class="fa-solid fa-pen"></i> Guthaben exakt setzen</button>
                 </div>
             </div>
             
@@ -421,7 +494,7 @@
             <div class="section-header">
                 <p class="section-label">Alle Registrierten Nutzer</p>
             </div>
-            <input type="text" id="user-search" placeholder="Nutzer suchen (E-Mail)..." oninput="renderAdminUserList(this.value)" style="padding: 14px 16px; border-radius: 12px; border: 1px solid var(--input-border); font-size: 0.95rem; outline: none; background: var(--item-bg); color: var(--text-main);">
+            <input type="text" id="user-search" placeholder="Nutzer suchen (E-Mail)..." oninput="onUserSearchInput(this.value)" style="padding: 14px 16px; border-radius: 12px; border: 1px solid var(--input-border); font-size: 0.95rem; outline: none; background: var(--item-bg); color: var(--text-main);" aria-label="Nutzer suchen">
             <div class="admin-form" style="padding: 12px;" id="admin-user-list">
                 <div class="empty-state">Lade Nutzer...</div>
             </div>
@@ -432,7 +505,7 @@
                 <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; margin: 0;">
                     Archiviert die aktuellen Guthaben &amp; Ausgaben aller Nutzer (z.B. am Camp-Ende) und setzt danach alle Konten auf 0€ zurück. Die Historie bleibt einsehbar in der Datenbank unter <code>history/</code>.
                 </p>
-                <button class="admin-btn set" style="width:100%;" onclick="closeOutPeriod()"><i class="fa-solid fa-box-archive"></i> Guthaben aller Nutzer archivieren &amp; zurücksetzen</button>
+                <button class="admin-btn set" style="width:100%;" id="close-period-btn" onclick="closeOutPeriod()"><i class="fa-solid fa-box-archive"></i> Guthaben aller Nutzer archivieren &amp; zurücksetzen</button>
             </div>
 
             <!-- Logs -->
@@ -442,7 +515,7 @@
             </div>
         </div>
 
-        <div class="qr-floating-btn" onclick="toggleUserQR(true)">
+        <div class="qr-floating-btn" onclick="toggleUserQR(true)" role="button" aria-label="Eigenen QR-Code anzeigen">
             <i class="fa-solid fa-qrcode"></i>
         </div>
 
@@ -478,9 +551,9 @@
                 <div class="pin-btn" onclick="pressPinButton(7)">7</div>
                 <div class="pin-btn" onclick="pressPinButton(8)">8</div>
                 <div class="pin-btn" onclick="pressPinButton(9)">9</div>
-                <div class="pin-btn action-clear" onclick="clearPinInput()"><i class="fa-solid fa-delete-left"></i></div>
+                <div class="pin-btn action-clear" onclick="clearPinInput()" aria-label="Eingabe löschen"><i class="fa-solid fa-delete-left"></i></div>
                 <div class="pin-btn" onclick="pressPinButton(0)">0</div>
-                <div class="pin-btn action-close" onclick="togglePinScreen(false)"><i class="fa-solid fa-xmark"></i></div>
+                <div class="pin-btn action-close" onclick="togglePinScreen(false)" aria-label="Schließen"><i class="fa-solid fa-xmark"></i></div>
             </div>
         </div>
 
@@ -504,10 +577,51 @@
     </div>
 
     <script>
+        // --- Toast / Confirm Helpers (replace alert()/confirm()) ---
+        function showToast(message, type = 'info', duration = 3500) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            const icon = type === 'success' ? 'fa-circle-check' : type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-info';
+            toast.innerHTML = `<i class="fa-solid ${icon}"></i><span>${escapeHtml(message)}</span>`;
+            container.appendChild(toast);
+            requestAnimationFrame(() => toast.classList.add('show'));
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, duration);
+        }
+
+        function showConfirm({ title = 'Bist du sicher?', message = '', okLabel = 'Bestätigen', neutral = false } = {}) {
+            return new Promise(resolve => {
+                const overlay = document.getElementById('confirm-overlay');
+                document.getElementById('confirm-title').textContent = title;
+                document.getElementById('confirm-message').textContent = message;
+                const okBtn = document.getElementById('confirm-ok-btn');
+                const cancelBtn = document.getElementById('confirm-cancel-btn');
+                okBtn.textContent = okLabel;
+                okBtn.classList.toggle('neutral', neutral);
+
+                function cleanup(result) {
+                    overlay.classList.remove('open');
+                    okBtn.removeEventListener('click', onOk);
+                    cancelBtn.removeEventListener('click', onCancel);
+                    resolve(result);
+                }
+                function onOk() { cleanup(true); }
+                function onCancel() { cleanup(false); }
+                okBtn.addEventListener('click', onOk);
+                cancelBtn.addEventListener('click', onCancel);
+                overlay.classList.add('open');
+            });
+        }
+
         // --- Dark Mode Logik ---
         function initTheme() {
             const savedTheme = localStorage.getItem('theme');
-            if (savedTheme === 'dark') {
+            const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const useDark = savedTheme ? savedTheme === 'dark' : prefersDark;
+            if (useDark) {
                 document.body.classList.add('dark-theme');
                 document.getElementById('theme-btn-icon').innerHTML = '<i class="fa-solid fa-sun"></i>';
             }
@@ -525,7 +639,8 @@
                 iconBtn.innerHTML = '<i class="fa-solid fa-moon"></i>';
             }
             // Update Chart Colors if Admin view is active
-            if(adminChartInstance) updateAdminChart(); 
+            if(adminChartInstance) updateAdminChart();
+            if(adminHistoryChartInstance) updateAdminHistoryChart();
         }
 
         // --- Firebase Setup ---
@@ -545,10 +660,14 @@
         let currentUser = null;
         let isAdmin = false;
         let cachedUserTransactions = []; 
-        let currentPinBuffer = ""; 
+        let currentPinBuffer = "";
+        let inflowVisibleCount = 10;
+        let outflowVisibleCount = 10;
+        const TRANSACTIONS_PAGE_SIZE = 10;
 
         // --- Chart.js ---
         let adminChartInstance = null;
+        let adminHistoryChartInstance = null;
 
         function updateAdminChart() {
             if (cachedUsers.length === 0) return;
@@ -604,10 +723,62 @@
             });
         }
 
+        // Zeitverlauf-Chart aus admin_logs (kumulierte Nettobuchungen über Zeit)
+        let cachedAdminLogs = [];
+        function updateAdminHistoryChart() {
+            const canvas = document.getElementById('adminHistoryChart');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const isDark = document.body.classList.contains('dark-theme');
+            const textColor = isDark ? '#f8fafc' : '#0f172a';
+            const gridColor = isDark ? '#334155' : '#e2e8f0';
+
+            const logs = [...cachedAdminLogs].filter(l => l.action === 'add' || l.action === 'sub').reverse();
+            let running = 0;
+            const labels = [];
+            const dataPoints = [];
+            logs.forEach(l => {
+                running += (l.action === 'add' ? l.amount : -l.amount);
+                labels.push(formatDate(l.timestamp).split(' ')[0]);
+                dataPoints.push(running);
+            });
+
+            if (adminHistoryChartInstance) adminHistoryChartInstance.destroy();
+
+            if (labels.length === 0) {
+                return;
+            }
+
+            adminHistoryChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'Netto-Verlauf (€)',
+                        data: dataPoints,
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.15)',
+                        fill: true,
+                        tension: 0.3,
+                        pointRadius: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { grid: { color: gridColor }, ticks: { color: textColor } },
+                        x: { grid: { display: false }, ticks: { color: textColor, maxRotation: 45, minRotation: 45 } }
+                    }
+                }
+            });
+        }
+
         function exportTransactionsCSV(filterType) {
-            if (!currentUser) return alert("Zuerst anmelden!");
+            if (!currentUser) return showToast("Zuerst anmelden!", "error");
             const rows = cachedUserTransactions.filter(t => filterType === 'all' || t.type === filterType);
-            if (rows.length === 0) return alert("Keine Transaktionen zum Exportieren vorhanden.");
+            if (rows.length === 0) return showToast("Keine Transaktionen zum Exportieren vorhanden.", "info");
 
             const header = ['Datum', 'Typ', 'Betrag (€)', 'Grund'];
             const csvLines = [header.join(';')];
@@ -632,6 +803,7 @@
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
+            showToast("CSV wurde exportiert.", "success");
         }
 
         auth.onAuthStateChanged(user => {
@@ -643,16 +815,32 @@
                 document.getElementById('auth-btn').innerHTML = `<span>Eingeloggt als ${user.displayName.split(' ')[0]}</span><div class="btn-arrow"><i class="fa-solid fa-check"></i></div>`;
                 document.getElementById('auth-btn').style.background = "#16a34a";
                 document.getElementById('header-main').innerText = `Hey, ${user.displayName.split(' ')[0]}!`;
+                document.getElementById('logout-btn').style.display = 'flex';
                 
                 if(user.photoURL) document.getElementById('user-profile-pic').src = user.photoURL;
                 document.getElementById('qr-image').src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(user.email)}`;
                 
                 startRealtimeListeners(user);
+            } else {
+                document.getElementById('logout-btn').style.display = 'none';
             }
         });
 
         function loginWithGoogle() {
-            auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(err => alert("Login Fehler: " + err.message));
+            auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(err => showToast("Login Fehler: " + err.message, "error"));
+        }
+
+        async function logoutUser() {
+            const confirmed = await showConfirm({ title: 'Abmelden?', message: 'Du wirst von diesem Gerät abgemeldet.', okLabel: 'Abmelden', neutral: true });
+            if (!confirmed) return;
+            // Sicherheitshalber Scanner/Admin-Ansicht zurücksetzen
+            stopScannerIfRunning();
+            isAdmin = false;
+            document.getElementById('app-container').classList.remove('is-admin');
+            auth.signOut().then(() => {
+                switchTab('start');
+                showToast("Erfolgreich abgemeldet.", "success");
+            }).catch(err => showToast("Fehler beim Abmelden: " + err.message, "error"));
         }
 
         function sanitizeEmail(email) { return email.replace(/\./g, ','); }
@@ -697,36 +885,58 @@
             });
 
             db.ref(`users/${safeEmail}/transactions`).orderByChild('timestamp').on('value', snap => {
-                const inflowList = document.getElementById('inflow-list');
-                const outflowList = document.getElementById('outflow-list');
-                inflowList.innerHTML = ''; outflowList.innerHTML = '';
-                
                 let hasIn = false; let hasOut = false;
                 const transactions = [];
                 snap.forEach(child => { transactions.push(child.val()); });
                 transactions.reverse();
                 cachedUserTransactions = transactions;
 
-                transactions.forEach(t => {
-                    const isPlus = t.type === 'inflow';
-                    const iconClass = isPlus ? 'fa-arrow-trend-up' : 'fa-arrow-trend-down';
-                    const html = `
-                        <div class="transaction-item ${isPlus?'inflow':'outflow'}">
-                            <div class="trans-icon-info">
-                                <div class="trans-icon"><i class="fa-solid ${iconClass}"></i></div>
-                                <div class="trans-details">
-                                    <div class="trans-title">${t.amount.toFixed(2).replace('.', ',')}€</div>
-                                    <div class="trans-type">${isPlus?'Eingehend':'Ausgehend'}${t.reason ? ` - ${t.reason}` : ''}</div>
-                                </div>
-                            </div>
-                            <div class="trans-date">${formatDate(t.timestamp)}</div>
-                        </div>`;
-                    if (isPlus) { inflowList.innerHTML += html; hasIn = true; } else { outflowList.innerHTML += html; hasOut = true; }
-                });
-
-                if(!hasIn) inflowList.innerHTML = '<div class="empty-state">Noch keine Einzahlungen vorhanden.</div>';
-                if(!hasOut) outflowList.innerHTML = '<div class="empty-state">Noch keine Auszahlungen vorhanden.</div>';
+                // Reset Paginierung bei neuen Daten
+                inflowVisibleCount = TRANSACTIONS_PAGE_SIZE;
+                outflowVisibleCount = TRANSACTIONS_PAGE_SIZE;
+                renderTransactionList('inflow');
+                renderTransactionList('outflow');
             });
+        }
+
+        function renderTransactionList(type) {
+            const listEl = document.getElementById(type === 'inflow' ? 'inflow-list' : 'outflow-list');
+            const loadMoreBtn = document.getElementById(type === 'inflow' ? 'inflow-load-more' : 'outflow-load-more');
+            const visibleCount = type === 'inflow' ? inflowVisibleCount : outflowVisibleCount;
+
+            const filtered = cachedUserTransactions.filter(t => t.type === type);
+            const toShow = filtered.slice(0, visibleCount);
+
+            listEl.innerHTML = '';
+            if (toShow.length === 0) {
+                listEl.innerHTML = `<div class="empty-state">Noch keine ${type === 'inflow' ? 'Einzahlungen' : 'Auszahlungen'} vorhanden.</div>`;
+                loadMoreBtn.style.display = 'none';
+                return;
+            }
+
+            toShow.forEach(t => {
+                const isPlus = t.type === 'inflow';
+                const iconClass = isPlus ? 'fa-arrow-trend-up' : 'fa-arrow-trend-down';
+                listEl.innerHTML += `
+                    <div class="transaction-item ${isPlus?'inflow':'outflow'}">
+                        <div class="trans-icon-info">
+                            <div class="trans-icon"><i class="fa-solid ${iconClass}"></i></div>
+                            <div class="trans-details">
+                                <div class="trans-title">${t.amount.toFixed(2).replace('.', ',')}€</div>
+                                <div class="trans-type">${isPlus?'Eingehend':'Ausgehend'}${t.reason ? ` - ${escapeHtml(t.reason)}` : ''}</div>
+                            </div>
+                        </div>
+                        <div class="trans-date">${formatDate(t.timestamp)}</div>
+                    </div>`;
+            });
+
+            loadMoreBtn.style.display = filtered.length > visibleCount ? 'block' : 'none';
+        }
+
+        function showMoreTransactions(type) {
+            if (type === 'inflow') inflowVisibleCount += TRANSACTIONS_PAGE_SIZE;
+            else outflowVisibleCount += TRANSACTIONS_PAGE_SIZE;
+            renderTransactionList(type);
         }
 
         db.ref('announcements').orderByChild('timestamp').on('value', snap => {
@@ -761,9 +971,9 @@
             });
         });
 
-        function requestAdminAccess() {
-            if (!currentUser) return alert("Zuerst anmelden!");
-            if (!isAdmin) return alert("Zugriff verweigert.");
+        async function requestAdminAccess() {
+            if (!currentUser) return showToast("Zuerst anmelden!", "error");
+            if (!isAdmin) return showToast("Zugriff verweigert.", "error");
             togglePinScreen(true);
         }
 
@@ -810,26 +1020,43 @@
         }
 
         function publishAnnouncement() {
+            const btn = document.getElementById('publish-announce-btn');
+            if (btn.disabled) return; // Doppel-Klick-Sperre
+
             const title = document.getElementById('announce-title').value.trim();
             const rawContent = document.getElementById('announce-content').innerHTML.trim();
-            if(!title || !rawContent || rawContent === "<br>") return alert("Titel und Inhalt dürfen nicht leer sein.");
+            if(!title || !rawContent || rawContent === "<br>") return showToast("Titel und Inhalt dürfen nicht leer sein.", "error");
 
             const content = sanitizeAnnouncementHtml(rawContent);
 
+            btn.disabled = true;
             db.ref('announcements').push({
                 title: title, content: content, timestamp: Date.now(), author: currentUser.email
-            });
-
-            alert("Meldung veröffentlicht!");
-            document.getElementById('announce-title').value = '';
-            document.getElementById('announce-content').innerHTML = '';
+            }).then(() => {
+                showToast("Meldung veröffentlicht!", "success");
+                document.getElementById('announce-title').value = '';
+                document.getElementById('announce-content').innerHTML = '';
+            }).catch(err => {
+                showToast("Fehler: " + err.message, "error");
+            }).finally(() => { btn.disabled = false; });
         }
 
-        function deleteAnnouncement(id) {
-            if(confirm("Diese Meldung wirklich löschen?")) { db.ref(`announcements/${id}`).remove(); }
+        async function deleteAnnouncement(id) {
+            const confirmed = await showConfirm({ title: 'Meldung löschen?', message: 'Diese Meldung wirklich löschen?', okLabel: 'Löschen' });
+            if (confirmed) {
+                db.ref(`announcements/${id}`).remove()
+                    .then(() => showToast("Meldung gelöscht.", "success"))
+                    .catch(err => showToast("Fehler: " + err.message, "error"));
+            }
         }
 
         let cachedUsers = [];
+        let userSearchDebounceTimer = null;
+
+        function onUserSearchInput(value) {
+            clearTimeout(userSearchDebounceTimer);
+            userSearchDebounceTimer = setTimeout(() => renderAdminUserList(value), 250);
+        }
 
         function loadAdminUserList() {
             db.ref('users').on('value', snap => {
@@ -869,10 +1096,17 @@
         }
 
         async function closeOutPeriod() {
-            if (cachedUsers.length === 0) return alert("Keine Nutzer geladen.");
-            const confirmed = confirm(`Wirklich die Guthaben von ${cachedUsers.length} Nutzer(n) archivieren und auf 0€ zurücksetzen?\nDiese Aktion kann nicht direkt rückgängig gemacht werden.`);
+            const btn = document.getElementById('close-period-btn');
+            if (btn.disabled) return;
+            if (cachedUsers.length === 0) return showToast("Keine Nutzer geladen.", "error");
+            const confirmed = await showConfirm({
+                title: 'Zeitraum abschließen?',
+                message: `Wirklich die Guthaben von ${cachedUsers.length} Nutzer(n) archivieren und auf 0€ zurücksetzen?\nDiese Aktion kann nicht direkt rückgängig gemacht werden.`,
+                okLabel: 'Archivieren & Zurücksetzen'
+            });
             if (!confirmed) return;
 
+            btn.disabled = true;
             const periodId = Date.now();
             const archive = {};
             cachedUsers.forEach(u => { archive[u.safeEmail] = { balance: u.balance, spent: u.spent, email: u.email }; });
@@ -886,39 +1120,54 @@
                     admin: currentUser.email, target: 'ALLE NUTZER', action: 'period_close',
                     amount: cachedUsers.length, reason: `Zeitraum abgeschlossen (history/${periodId})`, timestamp: periodId
                 });
-                alert("Zeitraum archiviert und alle Guthaben zurückgesetzt.");
-            } catch (e) { alert("Fehler beim Archivieren: " + e.message); }
+                showToast("Zeitraum archiviert und alle Guthaben zurückgesetzt.", "success");
+            } catch (e) { showToast("Fehler beim Archivieren: " + e.message, "error"); }
+            finally { btn.disabled = false; }
         }
 
         async function modifyUserBalance(actionType) {
+            const btnMap = { add: 'btn-add-balance', sub: 'btn-sub-balance', set: 'btn-set-balance' };
+            const allBtns = Object.values(btnMap).map(id => document.getElementById(id));
+            if (allBtns.some(b => b.disabled)) return; // Doppel-Klick-Sperre
+
             const emailInput = document.getElementById('target-user').value.trim();
             const reasonInput = document.getElementById('target-reason').value.trim();
             const amountInput = parseFloat(document.getElementById('target-amount').value);
 
-            if (!emailInput || isNaN(amountInput) || amountInput < 0) return alert("Gültige E-Mail & Betrag eingeben!");
-            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailInput)) return alert("Das sieht nicht wie eine gültige E-Mail-Adresse aus.");
+            if (!emailInput || isNaN(amountInput) || amountInput < 0) return showToast("Gültige E-Mail & Betrag eingeben!", "error");
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailInput)) return showToast("Das sieht nicht wie eine gültige E-Mail-Adresse aus.", "error");
 
             const safeTargetEmail = sanitizeEmail(emailInput);
             const dataRef = db.ref(`users/${safeTargetEmail}/data`);
 
             let existingSnap;
-            try { existingSnap = await dataRef.get(); } catch (e) { return alert("Fehler beim Prüfen des Nutzers: " + e.message); }
+            try { existingSnap = await dataRef.get(); } catch (e) { return showToast("Fehler beim Prüfen des Nutzers: " + e.message, "error"); }
             const userExists = existingSnap.exists();
             const currentBalance = userExists ? (existingSnap.val().balance || 0) : 0;
 
             if (!userExists) {
-                const create = confirm(`Für "${emailInput}" gibt es noch keinen Account.\nDiese E-Mail wurde vermutlich noch nie über Google-Login verwendet.\n\nTrotzdem einen neuen Eintrag anlegen?`);
+                const create = await showConfirm({
+                    title: 'Neuen Nutzer anlegen?',
+                    message: `Für "${emailInput}" gibt es noch keinen Account.\nDiese E-Mail wurde vermutlich noch nie über Google-Login verwendet.\n\nTrotzdem einen neuen Eintrag anlegen?`,
+                    okLabel: 'Anlegen', neutral: true
+                });
                 if (!create) return;
             }
 
             const projectedBalance = actionType === 'add' ? currentBalance + amountInput : actionType === 'sub' ? currentBalance - amountInput : amountInput;
             if (projectedBalance < 0) {
-                const proceed = confirm(`Achtung: Das Guthaben würde dadurch auf ${projectedBalance.toFixed(2).replace('.', ',')}€ (negativ) sinken.\nTrotzdem fortfahren?`);
+                const proceed = await showConfirm({
+                    title: 'Negatives Guthaben?',
+                    message: `Achtung: Das Guthaben würde dadurch auf ${projectedBalance.toFixed(2).replace('.', ',')}€ (negativ) sinken.\nTrotzdem fortfahren?`,
+                    okLabel: 'Fortfahren'
+                });
                 if (!proceed) return;
             }
 
             // Haptisches Feedback (falls unterstützt)
             if (navigator.vibrate) navigator.vibrate(150);
+
+            allBtns.forEach(b => b.disabled = true);
 
             dataRef.transaction(currentData => {
                 let data = currentData || { balance: 0, spent: 0 };
@@ -927,7 +1176,8 @@
                 else if (actionType === 'set') data.balance = amountInput; 
                 return data;
             }, (error, committed) => {
-                if (error) alert("Fehler: " + error.message);
+                allBtns.forEach(b => b.disabled = false);
+                if (error) showToast("Fehler: " + error.message, "error");
                 else if (committed) {
                     const timestamp = Date.now();
                     if(actionType === 'add' || actionType === 'sub') {
@@ -937,7 +1187,7 @@
                         });
                     }
                     db.ref('admin_logs').push({ admin: currentUser.email, target: emailInput, action: actionType, amount: amountInput, reason: reasonInput, timestamp: timestamp });
-                    alert("Erfolgreich!");
+                    showToast("Erfolgreich!", "success");
                     document.getElementById('target-amount').value = '';
                     document.getElementById('target-reason').value = '';
                 }
@@ -948,14 +1198,16 @@
             db.ref('admin_logs').orderByChild('timestamp').limitToLast(15).on('value', snap => {
                 const logList = document.getElementById('admin-log-list'); logList.innerHTML = '';
                 const logs = []; snap.forEach(child => { logs.push(child.val()); }); logs.reverse();
+                cachedAdminLogs = logs;
                 logs.forEach(log => {
                     logList.innerHTML += `
                         <div style="background:var(--bg-color); padding:10px; border-radius:10px; border:1px solid var(--border-color); margin-bottom:5px;">
-                            <strong style="color:var(--text-main);">${log.action.toUpperCase()}</strong>: ${log.amount}€ an ${log.target} <br>
-                            <span style="color:var(--text-muted); font-size:0.75rem;">${formatDate(log.timestamp)} | Grund: ${log.reason || '-'}</span>
+                            <strong style="color:var(--text-main);">${escapeHtml(log.action.toUpperCase())}</strong>: ${log.amount}€ an ${escapeHtml(log.target)} <br>
+                            <span style="color:var(--text-muted); font-size:0.75rem;">${formatDate(log.timestamp)} | Grund: ${escapeHtml(log.reason || '-')}</span>
                         </div>`;
                 });
                 if(logs.length === 0) logList.innerHTML = '<div class="empty-state">Keine Logs vorhanden.</div>';
+                updateAdminHistoryChart();
             });
         }
 
@@ -965,16 +1217,30 @@
             const container = document.getElementById('qr-reader-container');
             const btn = document.getElementById('start-scan-btn');
             if(isScannerRunning) {
-                if(html5QrcodeScanner) html5QrcodeScanner.stop();
-                container.style.display = 'none'; btn.innerHTML = '<i class="fa-solid fa-camera"></i> Nutzer QR scannen'; isScannerRunning = false;
+                stopScannerIfRunning();
+                container.style.display = 'none'; btn.innerHTML = '<i class="fa-solid fa-camera"></i> Nutzer QR scannen';
             } else {
                 container.style.display = 'block'; btn.innerHTML = '<i class="fa-solid fa-xmark"></i> Scanner beenden'; isScannerRunning = true;
                 html5QrcodeScanner = new Html5Qrcode("qr-reader");
                 html5QrcodeScanner.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 250 } },
                     (decodedText) => { document.getElementById('target-user').value = decodedText; toggleScanner(); },
                     (err) => { }
-                ).catch(err => { alert("Kamerafehler: " + err); toggleScanner(); });
+                ).catch(err => { showToast("Kamerafehler: " + err, "error"); isScannerRunning = false; container.style.display = 'none'; btn.innerHTML = '<i class="fa-solid fa-camera"></i> Nutzer QR scannen'; });
             }
+        }
+
+        // Stoppt die Kamera zuverlässig, z.B. beim Verlassen des Admin-Tabs
+        function stopScannerIfRunning() {
+            if (isScannerRunning && html5QrcodeScanner) {
+                html5QrcodeScanner.stop().catch(() => {}).finally(() => {
+                    html5QrcodeScanner.clear && html5QrcodeScanner.clear();
+                });
+            }
+            isScannerRunning = false;
+            const container = document.getElementById('qr-reader-container');
+            const btn = document.getElementById('start-scan-btn');
+            if (container) container.style.display = 'none';
+            if (btn) btn.innerHTML = '<i class="fa-solid fa-camera"></i> Nutzer QR scannen';
         }
 
         const pillLeft = document.getElementById('scroll-pill-left');
@@ -1024,6 +1290,7 @@
             const active = document.querySelector('.nav-item.active');
             if (active) moveNavIndicator(active.id);
             if (adminChartInstance) adminChartInstance.resize();
+            if (adminHistoryChartInstance) adminHistoryChartInstance.resize();
         });
         window.addEventListener('load', () => moveNavIndicator('nav-start'));
 
@@ -1104,6 +1371,11 @@
         });
 
         function switchTab(tabName) {
+            // Kamera zuverlässig stoppen, wenn der Admin-Tab verlassen wird
+            if (currentViewName === 'Admin' && tabName !== 'admin') {
+                stopScannerIfRunning();
+            }
+
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
             
@@ -1162,7 +1434,7 @@
         function toggleUserQR(show) {
             const qrScreen = document.getElementById('qr-screen');
             if (show) {
-                if(!currentUser) return alert("Du musst eingeloggt sein, um deinen QR Code zu sehen.");
+                if(!currentUser) return showToast("Du musst eingeloggt sein, um deinen QR Code zu sehen.", "error");
                 qrScreen.classList.add('open');
             } else {
                 qrScreen.classList.remove('open');
@@ -1227,7 +1499,7 @@
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('sw.js')
                     .then(reg => console.log('Service Worker registriert'))
-                    .catch(err => console.log('Service Worker Fehler', err));
+                    .catch(err => console.log('Service Worker Fehler (sw.js evtl. nicht vorhanden) -', err));
             });
         }
     </script>
