@@ -39,10 +39,15 @@
             --gradient-btn-1: linear-gradient(135deg, #ff9233 0%, #ff5e62 100%);
             --gradient-btn-2: linear-gradient(135deg, #7028ff 0%, #ff4b91 100%);
             
-            --nav-glass-bg: linear-gradient(120deg, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0.08) 45%, rgba(255,255,255,0.35) 100%), rgba(255, 255, 255, 0.55);
+            /* LIQUID GLASS VARIABLES */
+            --nav-glass-bg: linear-gradient(120deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.1) 45%, rgba(255,255,255,0.4) 100%), rgba(255, 255, 255, 0.6);
             --nav-glass-border: rgba(255, 255, 255, 0.65);
+            
             --nav-indicator-bg: rgba(255, 255, 255, 0.85);
             --nav-indicator-shadow: 0 6px 14px rgba(15, 23, 42, 0.12), inset 0 1px 2px rgba(255,255,255,1), inset 0 -2px 4px rgba(15,23,42,0.04);
+            
+            --nav-shadow: 0 16px 40px rgba(15, 23, 42, 0.16), 0 2px 6px rgba(15, 23, 42, 0.06), inset 0 1px 1px rgba(255,255,255,0.9), inset 0 -6px 14px rgba(255,255,255,0.25);
+            --pill-shadow: 0 10px 24px rgba(15, 23, 42, 0.12), inset 0 1px 1px rgba(255,255,255,0.9), inset 0 -4px 10px rgba(255,255,255,0.25);
             
             --empty-state-bg: rgba(255,255,255,0.5);
             
@@ -68,10 +73,15 @@
             --card-bg: rgba(30, 41, 59, 0.75);
             --shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
             
+            /* DARK MODE LIQUID GLASS VARIABLES */
             --nav-glass-bg: linear-gradient(120deg, rgba(30,41,59,0.5) 0%, rgba(30,41,59,0.1) 45%, rgba(30,41,59,0.5) 100%), rgba(15, 23, 42, 0.75);
             --nav-glass-border: rgba(255, 255, 255, 0.1);
+            
             --nav-indicator-bg: rgba(51, 65, 85, 0.85);
             --nav-indicator-shadow: 0 6px 14px rgba(0, 0, 0, 0.3), inset 0 1px 2px rgba(255,255,255,0.1), inset 0 -2px 4px rgba(0,0,0,0.5);
+            
+            --nav-shadow: 0 16px 40px rgba(0, 0, 0, 0.4), 0 2px 6px rgba(0, 0, 0, 0.2), inset 0 1px 1px rgba(255,255,255,0.1), inset 0 -6px 14px rgba(0,0,0,0.3);
+            --pill-shadow: 0 10px 24px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255,255,255,0.1), inset 0 -4px 10px rgba(0,0,0,0.3);
             
             --empty-state-bg: rgba(30, 41, 59, 0.5);
             
@@ -91,7 +101,13 @@
         body { background-color: var(--bg-color); color: var(--text-main); display: flex; justify-content: center; min-height: 100vh; overflow-x: hidden; transition: background-color 0.3s ease, color 0.3s ease; }
         .app-container { width: 100%; max-width: 430px; background: transparent; min-height: 100vh; display: flex; flex-direction: column; position: relative; overflow-x: hidden; padding-bottom: 120px; transition: background-color 0.3s ease; }
 
-        /* Header & Theme Toggle (GEQUETSCHT-BUGBEHEBUNG) */
+        /* ANIMATION FOR LIQUID GLASS SHEEN */
+        @keyframes navSheen {
+            0%, 100% { background-position: 0% 50%, 0 0; }
+            50% { background-position: 100% 50%, 0 0; }
+        }
+
+        /* Header & Theme Toggle */
         header { padding: 30px 24px 10px 24px; display: flex; justify-content: space-between; align-items: center; gap: 16px; }
         .header-left { flex-grow: 1; min-width: 0; }
         .theme-toggle-btn { 
@@ -108,15 +124,26 @@
             cursor: pointer; 
             transition: transform 0.2s, background 0.3s; 
             box-shadow: var(--shadow); 
-            flex-shrink: 0; /* Verhindert das Einquetschen */
+            flex-shrink: 0; 
         }
         .theme-toggle-btn:active { transform: scale(0.9); }
 
-        /* Wetter Widget */
-        .weather-widget { font-size: 0.8rem; color: var(--text-muted); display: flex; align-items: center; gap: 6px; margin-top: 4px; font-weight: 500; }
-
-        /* Scroll Pills */
-        .scroll-pill { position: fixed; top: 20px; z-index: 150; background: var(--nav-glass-bg); backdrop-filter: blur(18px) saturate(190%); -webkit-backdrop-filter: blur(18px) saturate(190%); border: 1px solid var(--nav-glass-border); border-radius: 50px; color: var(--text-main); opacity: 0; visibility: hidden; transform: scale(0.85); transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12); display: flex; align-items: center; justify-content: center; }
+        /* Scroll Pills — Liquid Glass */
+        .scroll-pill { 
+            position: fixed; top: 20px; z-index: 150; 
+            background: var(--nav-glass-bg); 
+            background-size: 250% 250%, 100% 100%;
+            background-position: 0% 50%, 0 0;
+            backdrop-filter: blur(18px) saturate(190%); 
+            -webkit-backdrop-filter: blur(18px) saturate(190%); 
+            border: 1px solid var(--nav-glass-border); 
+            border-radius: 50px; color: var(--text-main); 
+            opacity: 0; visibility: hidden; transform: scale(0.85); 
+            transition: opacity 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), visibility 0.35s, transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); 
+            box-shadow: var(--pill-shadow); 
+            display: flex; align-items: center; justify-content: center; 
+            animation: navSheen 9s ease-in-out infinite;
+        }
         .scroll-pill.visible { opacity: 1; visibility: visible; transform: scale(1); }
         .scroll-pill-left { left: 20px; padding: 12px 24px; font-size: 1.05rem; font-weight: 800; }
         .scroll-pill-right { right: 20px; padding: 4px; pointer-events: auto; cursor: pointer; }
@@ -127,8 +154,19 @@
         .sub-title { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-muted); font-weight: 700; margin-bottom: 2px; }
         .main-title { font-size: 2.3rem; font-weight: 900; letter-spacing: -1px; text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-        /* Dashboard Card */
-        .balance-card { background: var(--card-bg); backdrop-filter: blur(10px); border: 1px solid var(--nav-glass-border); margin: 10px 24px 24px 24px; padding: 30px 24px; border-radius: 28px; box-shadow: var(--shadow); text-align: center; transition: all 0.3s ease; }
+        /* Dashboard Card - Mit Liquid Glass */
+        .balance-card { 
+            background: var(--nav-glass-bg); 
+            background-size: 250% 250%, 100% 100%;
+            background-position: 0% 50%, 0 0;
+            backdrop-filter: blur(18px) saturate(190%); 
+            -webkit-backdrop-filter: blur(18px) saturate(190%);
+            border: 1px solid var(--nav-glass-border); 
+            margin: 10px 24px 24px 24px; padding: 30px 24px; border-radius: 28px; 
+            box-shadow: var(--shadow); text-align: center; 
+            transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease; 
+            animation: navSheen 9s ease-in-out infinite;
+        }
         .balance-label { font-size: 0.9rem; color: var(--text-muted); font-weight: 500; margin-bottom: 8px; }
         .balance-amount { font-size: 3rem; font-weight: 800; letter-spacing: -1px; color: var(--text-main); }
         .balance-spent { margin-top: 10px; font-size: 0.85rem; color: var(--outflow-text); font-weight: 600; background: var(--outflow-bg); display: inline-block; padding: 4px 12px; border-radius: 20px; transition: all 0.3s ease;}
@@ -197,8 +235,26 @@
         
         /* Admin Formulare */
         .admin-form { background: var(--item-bg); padding: 24px; border-radius: 24px; box-shadow: var(--shadow); border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 16px; }
-        .admin-form input { padding: 16px; border-radius: 12px; border: 1px solid var(--input-border); font-size: 1rem; outline: none; background: var(--bg-color); color: var(--text-main); }
-        .admin-form input:focus { border-color: #3b82f6; }
+        
+        /* LIQUID GLASS Admin Inputs */
+        .admin-form input, .editor-area, #user-search { 
+            padding: 16px; border-radius: 12px; font-size: 1rem; outline: none; 
+            color: var(--text-main); 
+            background: var(--nav-glass-bg) !important;
+            background-size: 250% 250%, 100% 100% !important;
+            background-position: 0% 50%, 0 0 !important;
+            backdrop-filter: blur(18px) saturate(190%) !important;
+            -webkit-backdrop-filter: blur(18px) saturate(190%) !important;
+            border: 1px solid var(--nav-glass-border) !important;
+            animation: navSheen 9s ease-in-out infinite;
+            box-shadow: inset 0 2px 6px rgba(0,0,0,0.05);
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .admin-form input:focus, .editor-area:focus, #user-search:focus { 
+            border-color: #3b82f6 !important; 
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2), inset 0 2px 6px rgba(0,0,0,0.05);
+        }
+
         .admin-btn-group { display: flex; gap: 8px; flex-wrap: wrap;}
         .admin-btn { flex: 1; min-width: 40%; padding: 14px; border: none; border-radius: 12px; font-weight: 700; color: white; cursor: pointer; }
         .admin-btn.add { background: #16a34a; }
@@ -208,7 +264,7 @@
 
         .editor-toolbar { display: flex; gap: 8px; margin-bottom: 8px; background: var(--bg-color); padding: 8px; border-radius: 10px; border: 1px solid var(--border-color); }
         .editor-toolbar button { background: var(--item-bg); border: 1px solid var(--input-border); border-radius: 6px; padding: 6px 12px; cursor: pointer; font-weight: bold; color: var(--text-main); }
-        .editor-area { min-height: 100px; padding: 16px; border-radius: 12px; border: 1px solid var(--input-border); outline: none; font-size: 0.95rem; line-height: 1.5; background: var(--bg-color); color: var(--text-main); }
+        .editor-area { min-height: 100px; line-height: 1.5; }
         .editor-area:empty:before { content: attr(placeholder); color: var(--text-muted); pointer-events: none; display: block; }
 
         .user-list-item { display: flex; justify-content: space-between; padding: 12px; border-bottom: 1px solid var(--border-color); font-size: 0.9rem; }
@@ -239,9 +295,22 @@
         /* Bottom Fade Out */
         .bottom-fade { position: fixed; bottom: 0; left: 0; right: 0; height: 75px; background: var(--bottom-fade); z-index: 90; pointer-events: none; transition: background 0.3s ease; }
 
-        /* Bottom Nav */
-        .bottom-nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: calc(100% - 40px); max-width: 390px; height: 72px; background: var(--nav-glass-bg); backdrop-filter: blur(22px) saturate(190%); border: 1px solid var(--nav-glass-border); border-radius: 32px; display: flex; justify-content: space-between; align-items: center; padding: 0 8px; z-index: 100; box-shadow: 0 16px 40px rgba(0, 0, 0, 0.16); }
-        .nav-indicator { position: absolute; top: 8px; left: 8px; height: 56px; border-radius: 22px; background: var(--nav-indicator-bg); box-shadow: var(--nav-indicator-shadow); backdrop-filter: blur(6px); transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), width 0.5s; z-index: 0; pointer-events: none; }
+        /* Bottom Nav — Liquid Glass */
+        .bottom-nav { 
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); 
+            width: calc(100% - 40px); max-width: 390px; height: 72px; 
+            background: var(--nav-glass-bg); 
+            background-size: 250% 250%, 100% 100%;
+            background-position: 0% 50%, 0 0;
+            backdrop-filter: blur(22px) saturate(190%); 
+            -webkit-backdrop-filter: blur(22px) saturate(190%); 
+            border: 1px solid var(--nav-glass-border); 
+            border-radius: 32px; display: flex; justify-content: space-between; 
+            align-items: center; padding: 0 8px; z-index: 100; 
+            box-shadow: var(--nav-shadow); 
+            animation: navSheen 9s ease-in-out infinite; 
+        }
+        .nav-indicator { position: absolute; top: 8px; left: 8px; height: 56px; border-radius: 22px; background: var(--nav-indicator-bg); box-shadow: var(--nav-indicator-shadow); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), width 0.5s; z-index: 0; pointer-events: none; }
         .nav-item { position: relative; z-index: 1; display: flex; flex-direction: row; align-items: center; justify-content: center; color: var(--text-muted); font-size: 0.72rem; font-weight: 600; flex: 1 1 0; height: 56px; margin: 0 2px; border-radius: 22px; cursor: pointer; overflow: hidden; touch-action: none; }
         .nav-item i { font-size: 1.2rem; transition: transform 0.35s; }
         .nav-item .nav-label { display: inline-block; max-width: 0; opacity: 0; margin-left: 0; white-space: nowrap; transition: all 0.4s; }
@@ -320,9 +389,6 @@
             <div class="header-left">
                 <p class="sub-title" id="header-sub">Zollamt Jachenau</p>
                 <h1 class="main-title" id="header-main">Hey!</h1>
-                <div class="weather-widget" id="weather-widget">
-                    <i class="fa-solid fa-mountain"></i> <span>Wetter lädt...</span>
-                </div>
             </div>
             <button class="theme-toggle-btn" onclick="toggleTheme()" id="theme-btn-icon" aria-label="Design umschalten">
                 <i class="fa-solid fa-moon"></i>
@@ -352,7 +418,6 @@
                 <div class="btn-arrow"><i class="fa-solid fa-shield-halved"></i></div>
             </button>
 
-            <!-- NEU: "Aktuelle Meldungen" jetzt als allererstes über "Dein Monat im Überblick" -->
             <div class="section-header">
                 <p class="section-label">Aktuelle Meldungen</p>
                 <span class="show-more-link" onclick="switchTab('meldungen')">Mehr anzeigen</span>
@@ -362,7 +427,6 @@
                 <div class="skeleton skeleton-block"></div>
             </div>
 
-            <!-- "Dein Monat im Überblick" folgt direkt danach -->
             <div id="user-quick-stats" style="display: none;">
                 <p class="section-label">Dein Monat im Überblick</p>
                 <div class="stats-grid">
@@ -377,7 +441,6 @@
                 </div>
             </div>
 
-            <!-- NEUE IDEE: Selbstbedienungs-Kiosk-Grid direkt auf dem Start-Tab -->
             <div id="user-kiosk-section" style="display: none;">
                 <p class="section-label">Schnell-Kiosk (Selbstbedienung)</p>
                 <div class="kiosk-grid">
@@ -527,7 +590,7 @@
             <div class="section-header">
                 <p class="section-label">Alle Registrierten Nutzer</p>
             </div>
-            <input type="text" id="user-search" placeholder="Nutzer suchen (E-Mail)..." oninput="onUserSearchInput(this.value)" style="padding: 14px 16px; border-radius: 12px; border: 1px solid var(--input-border); font-size: 0.95rem; outline: none; background: var(--item-bg); color: var(--text-main);">
+            <input type="text" id="user-search" placeholder="Nutzer suchen (E-Mail)..." oninput="onUserSearchInput(this.value)">
             <div class="admin-form" style="padding: 12px;" id="admin-user-list">
                 <div class="empty-state">Lade Nutzer...</div>
             </div>
@@ -666,35 +729,6 @@
         let adminChartInstance = null;
         let adminHistoryChartInstance = null;
 
-        // ECHTES LIVE WEATHER FOR JACHENAU WIDGET
-        async function fetchJachenauWeather() {
-            const weatherWidget = document.getElementById('weather-widget');
-            try {
-                // Jachenau Koordinaten: Lat: 47.6064, Lon: 11.4331
-                const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=47.6064&longitude=11.4331&current=temperature_2m,weather_code&timezone=Europe%2FBerlin');
-                if(!res.ok) throw new Error();
-                const data = await res.json();
-                const temp = data.current.temperature_2m;
-                const code = data.current.weather_code;
-                
-                let icon = 'fa-cloud-sun';
-                let desc = 'Heiter';
-
-                if (code === 0) { icon = 'fa-sun'; desc = 'Sonnig'; }
-                else if (code >= 1 && code <= 3) { icon = 'fa-cloud-sun'; desc = 'Leicht bewölkt'; }
-                else if (code >= 45 && code <= 48) { icon = 'fa-smog'; desc = 'Nebel'; }
-                else if (code >= 51 && code <= 67) { icon = 'fa-cloud-showers-heavy'; desc = 'Regen'; }
-                else if (code >= 71 && code <= 77) { icon = 'fa-snowflake'; desc = 'Schnee'; }
-                else if (code >= 80 && code <= 82) { icon = 'fa-cloud-rain'; desc = 'Schauer'; }
-                else if (code >= 95) { icon = 'fa-cloud-bolt'; desc = 'Gewitter'; }
-
-                weatherWidget.innerHTML = `<i class="fa-solid ${icon}"></i> <span>Jachenau Bergwetter: ${temp.toFixed(1)}°C (${desc})</span>`;
-            } catch(e) {
-                weatherWidget.innerHTML = `<i class="fa-solid fa-mountain"></i> <span>Zollamt Jachenau</span>`;
-            }
-        }
-        fetchJachenauWeather();
-
         // Kiosk Selbstbedienung - Schneller Einkauf
         async function quickBuy(itemName, price, emoji) {
             if (!currentUser) {
@@ -723,7 +757,6 @@
                 if (error) {
                     showToast("Fehler beim Kauf: " + error.message, "error");
                 } else if (committed) {
-                    // Transaktion in Liste eintragen
                     const ts = Date.now();
                     db.ref(`users/${safeEmail}/transactions`).push({
                         amount: price,
@@ -732,7 +765,6 @@
                         timestamp: ts
                     });
 
-                    // Log erstellen
                     db.ref('admin_logs').push({
                         admin: 'Selbstbedienung',
                         target: currentUser.email,
@@ -742,7 +774,6 @@
                         timestamp: ts
                     });
 
-                    // Sound/Vibration & Konfetti!
                     if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
                     confetti({ particleCount: 60, spread: 60, origin: { y: 0.8 }, colors: ['#ff9233', '#7028ff', '#16a34a', '#3b82f6'] });
                     
@@ -1376,3 +1407,4 @@
     </script>
 </body>
 </html>
+
