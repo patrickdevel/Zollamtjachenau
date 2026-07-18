@@ -49,31 +49,31 @@
             padding-bottom: 100px;
         }
 
-        /* Scroll-Pill */
+        /* Scroll Pill Style */
         .scroll-pill {
             position: fixed;
             top: 20px;
             left: 20px;
             z-index: 150;
-            background: rgba(255, 255, 255, 0.6);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.5);
             padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
             border-radius: 50px;
             font-size: 0.8rem;
             font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            color: var(--text-main);
             opacity: 0;
-            transform: translateY(-10px);
-            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
             pointer-events: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         }
 
         .scroll-pill.visible {
             opacity: 1;
-            transform: translateY(0);
+            visibility: visible;
         }
 
         /* Header Styles */
@@ -107,46 +107,317 @@
             border-radius: 28px;
             box-shadow: var(--shadow);
             text-align: center;
+            transition: transform 0.3s ease;
         }
 
-        .balance-label { font-size: 0.9rem; color: var(--text-muted); font-weight: 500; margin-bottom: 8px; }
-        .balance-amount { font-size: 3rem; font-weight: 800; letter-spacing: -1px; }
-        .balance-spent { margin-top: 10px; font-size: 0.85rem; color: #ef4444; font-weight: 600; background: #fee2e2; display: inline-block; padding: 4px 12px; border-radius: 20px; }
+        .balance-card:active {
+            transform: scale(0.98);
+        }
 
-        /* Views */
-        .view { display: none; padding: 0 24px; flex-direction: column; gap: 16px; animation: fadeIn 0.4s ease forwards; }
-        .view.active { display: flex; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .balance-label {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
 
-        /* Buttons */
-        .action-btn { display: flex; align-items: center; justify-content: space-between; padding: 24px; border-radius: 24px; color: white; text-decoration: none; font-weight: 700; font-size: 1.1rem; border: none; cursor: pointer; transition: transform 0.2s; }
+        .balance-amount {
+            font-size: 3rem;
+            font-weight: 800;
+            letter-spacing: -1px;
+        }
+
+        .balance-spent {
+            margin-top: 10px;
+            font-size: 0.85rem;
+            color: #ef4444;
+            font-weight: 600;
+            background: #fee2e2;
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+        }
+
+        /* Navigation Views */
+        .view {
+            display: none;
+            padding: 0 24px;
+            flex-direction: column;
+            gap: 16px;
+            animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .view.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Buttons / Action Cards */
+        .section-label {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            margin-top: 10px;
+            margin-bottom: 4px;
+        }
+
+        .action-btn {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 24px;
+            border-radius: 24px;
+            color: white;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 1.1rem;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            border: none;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .action-btn:active {
+            transform: scale(0.97);
+        }
+
         .btn-orange { background: var(--gradient-btn-1); }
         .btn-purple { background: var(--gradient-btn-2); }
-        .btn-arrow { width: 40px; height: 40px; background: rgba(255, 255, 255, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; }
 
-        /* Transaktions */
-        .transaction-list { display: flex; flex-direction: column; gap: 12px; }
-        .transaction-item { display: flex; align-items: center; justify-content: space-between; background: white; padding: 16px; border-radius: 20px; border: 1px solid #f1f5f9; }
-        .trans-icon { width: 48px; height: 48px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
-        .inflow .trans-icon { background: #dcfce7; color: #16a34a; }
-        .outflow .trans-icon { background: #fee2e2; color: #dc2626; }
+        .btn-arrow {
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.3s ease;
+        }
 
-        /* QR UI */
-        .qr-floating-btn { position: fixed; bottom: 100px; right: 20px; width: 56px; height: 56px; background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.4rem; z-index: 99; cursor: pointer; }
-        
-        .qr-modal { position: fixed; top: 0; left: 50%; transform: translateX(-50%) translateY(100%); width: 100%; max-width: 430px; height: 100%; background: #f1f5f9; z-index: 200; transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); display: flex; flex-direction: column; align-items: center; padding: 40px 24px 120px 24px; }
-        .qr-modal.open { transform: translateX(-50%) translateY(0); }
-        .qr-card { background: white; padding: 24px; border-radius: 24px; margin-bottom: auto; }
+        .action-btn:hover .btn-arrow {
+            transform: translateX(4px);
+        }
 
-        /* Nav */
-        .bottom-nav { position: fixed; bottom: 0; width: 100%; max-width: 430px; height: 80px; background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(20px); border-top: 1px solid #e2e8f0; display: flex; justify-content: space-around; align-items: center; z-index: 100; }
-        .nav-item { display: flex; flex-direction: column; align-items: center; color: #94a3b8; cursor: pointer; width: 80px; font-size: 0.75rem; font-weight: 600; gap: 4px; }
-        .nav-item.active { color: var(--text-main); }
+        /* Transaction Lists */
+        .transaction-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .transaction-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: white;
+            padding: 16px;
+            border-radius: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+            border: 1px solid #f1f5f9;
+        }
+
+        .trans-icon-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .trans-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .inflow .trans-icon {
+            background: #dcfce7;
+            color: #16a34a;
+        }
+
+        .outflow .trans-icon {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .trans-details .trans-title {
+            font-weight: 700;
+            font-size: 1.05rem;
+            margin-bottom: 2px;
+        }
+
+        .trans-details .trans-type {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .trans-date {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        /* Floating QR Button */
+        .qr-floating-btn {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(130px);
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.4rem;
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+            cursor: pointer;
+            z-index: 99;
+            transition: transform 0.2s ease;
+        }
+
+        @media(max-width: 430px) {
+            .qr-floating-btn {
+                left: auto;
+                right: 20px;
+                transform: none;
+            }
+        }
+
+        .qr-floating-btn:active {
+            transform: scale(0.9) !important;
+        }
+
+        /* Bottom Tab Bar Nav (Fixed) */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            max-width: 430px;
+            height: 80px;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 0 10px;
+            z-index: 100;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 0.75rem;
+            font-weight: 600;
+            gap: 4px;
+            width: 80px;
+            height: 100%;
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+
+        .nav-item i {
+            font-size: 1.35rem;
+            transition: transform 0.2s ease;
+        }
+
+        .nav-item.active {
+            color: var(--text-main);
+        }
+
+        .nav-item.active i {
+            transform: translateY(-2px);
+            color: #0f172a;
+        }
+
+        /* QR-Code Modal */
+        .qr-modal {
+            position: fixed;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%) translateY(100%);
+            width: 100%;
+            max-width: 430px;
+            height: 100%;
+            background: #f1f5f9;
+            z-index: 200;
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 24px 120px 24px;
+        }
+
+        .qr-modal.open {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .qr-modal h2 {
+            font-size: 2rem;
+            font-weight: 900;
+            letter-spacing: -0.5px;
+            text-transform: uppercase;
+            margin-top: 20px;
+            margin-bottom: 40px;
+            text-align: center;
+        }
+
+        .qr-card {
+            background: white;
+            padding: 24px;
+            border-radius: 24px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.06);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: auto;
+        }
+
+        .qr-card img {
+            width: 100%;
+            max-width: 260px;
+            height: auto;
+            display: block;
+        }
+
+        .close-btn {
+            width: 100%;
+            padding: 20px;
+            background: linear-gradient(135deg, #ff4141 0%, #ff7343 100%);
+            color: white;
+            border: none;
+            border-radius: 24px;
+            font-size: 1.2rem;
+            font-weight: 900;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            cursor: pointer;
+            box-shadow: 0 10px 25px rgba(255, 65, 65, 0.3);
+            transition: transform 0.2s ease;
+        }
+
+        .close-btn:active {
+            transform: scale(0.97);
+        }
     </style>
 </head>
 <body>
 
-    <!-- Die neue Pill -->
+    <!-- Die neue Scroll-Pill -->
     <div id="scroll-pill" class="scroll-pill">Start</div>
 
     <div class="app-container">
@@ -164,10 +435,12 @@
 
         <div id="view-start" class="view active">
             <p class="section-label">Schnellauswahl</p>
+            
             <button class="action-btn btn-orange" onclick="switchTab('auszahlungen')">
                 <span>Auszahlungen ansehen</span>
                 <div class="btn-arrow"><i class="fa-solid fa-arrow-right"></i></div>
             </button>
+
             <button class="action-btn btn-purple" onclick="switchTab('einzahlungen')">
                 <span>Einzahlungen ansehen</span>
                 <div class="btn-arrow"><i class="fa-solid fa-arrow-right"></i></div>
@@ -177,8 +450,25 @@
         <div id="view-einzahlungen" class="view">
             <div class="transaction-list">
                 <div class="transaction-item inflow">
-                    <div class="trans-icon"><i class="fa-solid fa-arrow-trend-up"></i></div>
-                    <div><strong>10€</strong><br><small>Eingehend</small></div>
+                    <div class="trans-icon-info">
+                        <div class="trans-icon"><i class="fa-solid fa-arrow-trend-up"></i></div>
+                        <div class="trans-details">
+                            <div class="trans-title">10€</div>
+                            <div class="trans-type">Eingehend</div>
+                        </div>
+                    </div>
+                    <div class="trans-date">25.7.2026</div>
+                </div>
+
+                <div class="transaction-item inflow">
+                    <div class="trans-icon-info">
+                        <div class="trans-icon"><i class="fa-solid fa-arrow-trend-up"></i></div>
+                        <div class="trans-details">
+                            <div class="trans-title">5€</div>
+                            <div class="trans-type">Eingehend</div>
+                        </div>
+                    </div>
+                    <div class="trans-date">23.7.2026</div>
                 </div>
             </div>
         </div>
@@ -186,8 +476,25 @@
         <div id="view-auszahlungen" class="view">
             <div class="transaction-list">
                 <div class="transaction-item outflow">
-                    <div class="trans-icon"><i class="fa-solid fa-arrow-trend-down"></i></div>
-                    <div><strong>1€</strong><br><small>Ausgehend</small></div>
+                    <div class="trans-icon-info">
+                        <div class="trans-icon"><i class="fa-solid fa-arrow-trend-down"></i></div>
+                        <div class="trans-details">
+                            <div class="trans-title">1€</div>
+                            <div class="trans-type">Ausgehend</div>
+                        </div>
+                    </div>
+                    <div class="trans-date">25.7.2026</div>
+                </div>
+
+                <div class="transaction-item outflow">
+                    <div class="trans-icon-info">
+                        <div class="trans-icon"><i class="fa-solid fa-arrow-trend-down"></i></div>
+                        <div class="trans-details">
+                            <div class="trans-title">33ct</div>
+                            <div class="trans-type">Ausgehend</div>
+                        </div>
+                    </div>
+                    <div class="trans-date">23.7.2026</div>
                 </div>
             </div>
         </div>
@@ -199,61 +506,85 @@
         <div id="qr-screen" class="qr-modal">
             <h2>Dein QR-Code</h2>
             <div class="qr-card">
-                <img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=Zollamt-Jachenau" alt="QR">
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=Zollamt-Jachenau-7.34" alt="QR Code">
             </div>
-            <button onclick="toggleQR(false)" style="padding:15px 30px; border-radius:20px; border:none; background:#ff4141; color:white; font-weight:bold;">Schließen</button>
+            <button class="close-btn" onclick="toggleQR(false)">Schließen</button>
         </div>
 
         <nav class="bottom-nav">
             <div class="nav-item active" id="nav-start" onclick="switchTab('start')">
-                <i class="fa-solid fa-house"></i><span>Start</span>
+                <i class="fa-solid fa-house"></i>
+                <span>Start</span>
             </div>
             <div class="nav-item" id="nav-einzahlungen" onclick="switchTab('einzahlungen')">
-                <i class="fa-solid fa-piggy-bank"></i><span>Einzahlungen</span>
+                <i class="fa-solid fa-piggy-bank"></i>
+                <span>Einzahlungen</span>
             </div>
             <div class="nav-item" id="nav-auszahlungen" onclick="switchTab('auszahlungen')">
-                <i class="fa-solid fa-receipt"></i><span>Auszahlungen</span>
+                <i class="fa-solid fa-receipt"></i>
+                <span>Auszahlungen</span>
             </div>
         </nav>
+
     </div>
 
     <script>
-        // Tab-Logik
+        const scrollPill = document.getElementById('scroll-pill');
+        let currentViewName = 'Start';
+
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 50) {
+                scrollPill.classList.add('visible');
+            } else {
+                scrollPill.classList.remove('visible');
+            }
+        });
+
         function switchTab(tabName) {
-            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            document.querySelectorAll('.view').forEach(view => view.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
             
-            const pill = document.getElementById('scroll-pill');
-            
+            const subTitle = document.getElementById('header-sub');
+            const mainTitle = document.getElementById('header-main');
+            const extraInfo = document.getElementById('extra-info');
+
             if(tabName === 'start') {
                 document.getElementById('view-start').classList.add('active');
                 document.getElementById('nav-start').classList.add('active');
-                pill.innerText = 'Start';
-            } else if(tabName === 'einzahlungen') {
+                subTitle.style.display = 'block';
+                subTitle.innerText = 'Zollamt Jachenau';
+                mainTitle.innerText = 'Hey!';
+                extraInfo.style.display = 'none';
+                currentViewName = 'Start';
+            } 
+            else if(tabName === 'einzahlungen') {
                 document.getElementById('view-einzahlungen').classList.add('active');
                 document.getElementById('nav-einzahlungen').classList.add('active');
-                pill.innerText = 'Einzahlungen';
-            } else {
+                subTitle.style.display = 'none';
+                mainTitle.innerText = 'Einzahlungen';
+                extraInfo.style.display = 'none';
+                currentViewName = 'Einzahlungen';
+            } 
+            else if(tabName === 'auszahlungen') {
                 document.getElementById('view-auszahlungen').classList.add('active');
                 document.getElementById('nav-auszahlungen').classList.add('active');
-                pill.innerText = 'Auszahlungen';
+                subTitle.style.display = 'none';
+                mainTitle.innerText = 'Auszahlungen';
+                extraInfo.style.display = 'inline-block';
+                currentViewName = 'Auszahlungen';
             }
+            scrollPill.innerText = currentViewName;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        // QR Logik
         function toggleQR(show) {
-            document.getElementById('qr-screen').classList.toggle('open', show);
-        }
-
-        // Scroll Logik für die Pill
-        window.addEventListener('scroll', () => {
-            const pill = document.getElementById('scroll-pill');
-            if (window.scrollY > 80) {
-                pill.classList.add('visible');
+            const qrScreen = document.getElementById('qr-screen');
+            if (show) {
+                qrScreen.classList.add('open');
             } else {
-                pill.classList.remove('visible');
+                qrScreen.classList.remove('open');
             }
-        });
+        }
     </script>
 </body>
 </html>
