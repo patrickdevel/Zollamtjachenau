@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -38,7 +37,7 @@
 
         body { background-color: var(--bg-color); color: var(--text-main); display: flex; justify-content: center; min-height: 100vh; }
 
-        .app-container { width: 100%; max-width: 430px; background: #ffffff; min-height: 100vh; display: flex; flex-direction: column; position: relative; box-shadow: 0 0 40px rgba(0,0,0,0.05); overflow-x: hidden; padding-bottom: 100px; }
+        .app-container { width: 100%; max-width: 430px; background: #ffffff; min-height: 100vh; display: flex; flex-direction: column; position: relative; box-shadow: 0 0 40px rgba(0,0,0,0.05); overflow-x: hidden; padding-bottom: 120px; }
 
         /* Scroll Pills */
         .scroll-pill { position: fixed; top: 20px; z-index: 150; background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.5); border-radius: 50px; color: var(--text-main); opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0.3s ease; box-shadow: 0 6px 16px rgba(0,0,0,0.08); display: flex; align-items: center; justify-content: center; }
@@ -128,18 +127,37 @@
         .hidden-admin-trigger { text-align: center; margin-top: 20px; font-size: 0.8rem; color: #cbd5e1; cursor: pointer; padding: 10px; }
 
         /* Floating QR */
-        .qr-floating-btn { position: fixed; bottom: 100px; left: 50%; transform: translateX(130px); width: 56px; height: 56px; background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.4rem; box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4); cursor: pointer; z-index: 99; transition: transform 0.2s ease; }
+        .qr-floating-btn { position: fixed; bottom: 116px; left: 50%; transform: translateX(130px); width: 56px; height: 56px; background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.4rem; box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4); cursor: pointer; z-index: 99; transition: transform 0.2s ease; }
         @media(max-width: 430px) { .qr-floating-btn { left: auto; right: 20px; transform: none; } }
 
-        /* Bottom Nav (Now 4 Items) */
-        .bottom-nav { position: fixed; bottom: 0; width: 100%; max-width: 430px; height: 80px; background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(20px); border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; padding: 0 10px; z-index: 100; }
-        .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; color: #94a3b8; font-size: 0.7rem; font-weight: 600; gap: 4px; flex: 1; height: 100%; cursor: pointer; transition: color 0.2s ease; }
-        .nav-item i { font-size: 1.3rem; transition: transform 0.2s ease; }
-        .nav-item.active { color: var(--text-main); }
-        .nav-item.active i { transform: translateY(-2px); color: #0f172a; }
+        /* Bottom Nav — now a floating pill, detached from the screen edge */
+        .bottom-nav {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: calc(100% - 40px);
+            max-width: 390px;
+            height: 72px;
+            background: rgba(255, 255, 255, 0.72);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            border-radius: 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 8px;
+            z-index: 100;
+            box-shadow: 0 16px 40px rgba(15, 23, 42, 0.14), 0 2px 6px rgba(15, 23, 42, 0.06);
+        }
+        .nav-item { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #94a3b8; font-size: 0.68rem; font-weight: 600; gap: 4px; flex: 1; height: 56px; margin: 0 2px; border-radius: 22px; cursor: pointer; transition: color 0.2s ease, background 0.25s ease; }
+        .nav-item i { font-size: 1.25rem; transition: transform 0.2s ease; }
+        .nav-item.active { color: var(--text-main); background: #f1f5f9; }
+        .nav-item.active i { transform: translateY(-1px); color: #0f172a; }
 
         /* QR-Code Modal */
-        .qr-modal { position: fixed; top: 0; left: 50%; transform: translateX(-50%) translateY(100%); width: 100%; max-width: 430px; height: 100%; background: #f1f5f9; z-index: 200; transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); display: flex; flex-direction: column; align-items: center; padding: 40px 24px 120px 24px; }
+        .qr-modal { position: fixed; top: 0; left: 50%; transform: translateX(-50%) translateY(100%); width: 100%; max-width: 430px; height: 100%; background: #f1f5f9; z-index: 200; transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); display: flex; flex-direction: column; align-items: center; padding: 40px 24px 140px 24px; }
         .qr-modal.open { transform: translateX(-50%) translateY(0); }
         .qr-modal h2 { font-size: 2rem; font-weight: 900; margin-top: 20px; margin-bottom: 40px; text-transform: uppercase;}
         .qr-card { background: white; padding: 24px; border-radius: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.06); }
@@ -637,5 +655,3 @@
     </script>
 </body>
 </html>
-
-
