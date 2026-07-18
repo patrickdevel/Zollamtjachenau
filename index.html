@@ -1,47 +1,483 @@
+
 <!DOCTYPE html>
 <html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Zollamt Jachenau Dashboard</title>
-    <!-- Firebase SDKs -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getDatabase, ref, update, get, push } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyD3kppZkw_z7LesZavzyqOq-L8x0aK4NsE",
-            authDomain: "durchagngssystem.firebaseapp.com",
-            databaseURL: "https://durchagngssystem-default-rtdb.firebaseio.com",
-            projectId: "durchagngssystem",
-            storageBucket: "durchagngssystem.firebasestorage.app",
-            messagingSenderId: "681623652861",
-            appId: "1:681623652861:web:5e54850cb9bb64a156f194"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getDatabase(app);
-        window.auth = auth;
-        window.db = db;
-        window.provider = new GoogleAuthProvider();
-    </script>
+    <!-- Google Fonts & FontAwesome Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
     <style>
-        :root { /* ... (DEINE CSS VARIABLEN BLEIBEN GLEICH) ... */ }
-        /* ... (DEIN GESAMTES CSS BLEIBT ERHALTEN) ... */
+        :root {
+            --bg-color: #f8fafc;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --gradient-btn-1: linear-gradient(135deg, #ff9233 0%, #ff5e62 100%);
+            --gradient-btn-2: linear-gradient(135deg, #7028ff 0%, #ff4b91 100%);
+            --card-bg: rgba(255, 255, 255, 0.75);
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        /* Smartphone-Container Simulation */
+        .app-container {
+            width: 100%;
+            max-width: 430px;
+            background: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            box-shadow: 0 0 40px rgba(0,0,0,0.05);
+            overflow-x: hidden;
+            padding-bottom: 100px;
+        }
+
+        /* Scroll Pill Style */
+        .scroll-pill {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 150;
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--text-main);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+            pointer-events: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+
+        .scroll-pill.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Header Styles */
+        header {
+            padding: 30px 24px 10px 24px;
+        }
+
+        .sub-title {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-muted);
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .main-title {
+            font-size: 2.5rem;
+            font-weight: 900;
+            letter-spacing: -1px;
+            text-transform: uppercase;
+        }
+
+        /* Dashboard Card */
+        .balance-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            margin: 10px 24px 24px 24px;
+            padding: 30px 24px;
+            border-radius: 28px;
+            box-shadow: var(--shadow);
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .balance-card:active {
+            transform: scale(0.98);
+        }
+
+        .balance-label {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .balance-amount {
+            font-size: 3rem;
+            font-weight: 800;
+            letter-spacing: -1px;
+        }
+
+        .balance-spent {
+            margin-top: 10px;
+            font-size: 0.85rem;
+            color: #ef4444;
+            font-weight: 600;
+            background: #fee2e2;
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+        }
+
+        /* Navigation Views */
+        .view {
+            display: none;
+            padding: 0 24px;
+            flex-direction: column;
+            gap: 16px;
+            animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .view.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Buttons / Action Cards */
+        .section-label {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            margin-top: 10px;
+            margin-bottom: 4px;
+        }
+
+        .action-btn {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 24px;
+            border-radius: 24px;
+            color: white;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 1.1rem;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            border: none;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .action-btn:active {
+            transform: scale(0.97);
+        }
+
+        .btn-orange { background: var(--gradient-btn-1); }
+        .btn-purple { background: var(--gradient-btn-2); }
+        .btn-blue { background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%); } /* Für Google Login */
+
+        .btn-arrow {
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.3s ease;
+        }
+
+        .action-btn:hover .btn-arrow {
+            transform: translateX(4px);
+        }
+
+        /* Transaction Lists */
+        .transaction-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .transaction-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: white;
+            padding: 16px;
+            border-radius: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+            border: 1px solid #f1f5f9;
+        }
+
+        .trans-icon-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .trans-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .inflow .trans-icon {
+            background: #dcfce7;
+            color: #16a34a;
+        }
+
+        .outflow .trans-icon {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .trans-details .trans-title {
+            font-weight: 700;
+            font-size: 1.05rem;
+            margin-bottom: 2px;
+        }
+
+        .trans-details .trans-type {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .trans-date {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        /* Admin Formular */
+        .admin-form {
+            background: white;
+            padding: 24px;
+            border-radius: 24px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+            border: 1px solid #f1f5f9;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .admin-form input {
+            padding: 16px;
+            border-radius: 12px;
+            border: 1px solid #cbd5e1;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .admin-form input:focus {
+            border-color: #3b82f6;
+        }
+
+        .admin-btn-group {
+            display: flex;
+            gap: 12px;
+        }
+
+        .admin-btn {
+            flex: 1;
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 700;
+            color: white;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
         
-        /* Neu für das Admin Panel */
-        .admin-panel { padding: 20px; }
-        .input-group { margin-bottom: 15px; }
-        .admin-btn { width: 100%; padding: 15px; margin: 10px 0; border-radius: 15px; border: none; font-weight: bold; cursor: pointer; }
+        .admin-btn:active { transform: scale(0.95); }
+        .admin-btn.add { background: #16a34a; }
+        .admin-btn.sub { background: #dc2626; }
+
+        .hidden-admin-trigger {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.8rem;
+            color: #cbd5e1;
+            cursor: pointer;
+        }
+
+        /* Floating QR Button */
+        .qr-floating-btn {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(130px);
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.4rem;
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+            cursor: pointer;
+            z-index: 99;
+            transition: transform 0.2s ease;
+        }
+
+        @media(max-width: 430px) {
+            .qr-floating-btn {
+                left: auto;
+                right: 20px;
+                transform: none;
+            }
+        }
+
+        .qr-floating-btn:active {
+            transform: scale(0.9) !important;
+        }
+
+        /* Bottom Tab Bar Nav (Fixed) */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            max-width: 430px;
+            height: 80px;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 0 10px;
+            z-index: 100;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 0.75rem;
+            font-weight: 600;
+            gap: 4px;
+            width: 80px;
+            height: 100%;
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+
+        .nav-item i {
+            font-size: 1.35rem;
+            transition: transform 0.2s ease;
+        }
+
+        .nav-item.active {
+            color: var(--text-main);
+        }
+
+        .nav-item.active i {
+            transform: translateY(-2px);
+            color: #0f172a;
+        }
+
+        /* QR-Code Modal */
+        .qr-modal {
+            position: fixed;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%) translateY(100%);
+            width: 100%;
+            max-width: 430px;
+            height: 100%;
+            background: #f1f5f9;
+            z-index: 200;
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 24px 120px 24px;
+        }
+
+        .qr-modal.open {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .qr-modal h2 {
+            font-size: 2rem;
+            font-weight: 900;
+            letter-spacing: -0.5px;
+            text-transform: uppercase;
+            margin-top: 20px;
+            margin-bottom: 40px;
+            text-align: center;
+        }
+
+        .qr-card {
+            background: white;
+            padding: 24px;
+            border-radius: 24px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.06);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: auto;
+        }
+
+        .qr-card img {
+            width: 100%;
+            max-width: 260px;
+            height: auto;
+            display: block;
+        }
+
+        .close-btn {
+            width: 100%;
+            padding: 20px;
+            background: linear-gradient(135deg, #ff4141 0%, #ff7343 100%);
+            color: white;
+            border: none;
+            border-radius: 24px;
+            font-size: 1.2rem;
+            font-weight: 900;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            cursor: pointer;
+            box-shadow: 0 10px 25px rgba(255, 65, 65, 0.3);
+            transition: transform 0.2s ease;
+        }
+
+        .close-btn:active {
+            transform: scale(0.97);
+        }
     </style>
 </head>
 <body>
 
+    <!-- Die neue Scroll-Pill -->
     <div id="scroll-pill" class="scroll-pill">Start</div>
 
     <div class="app-container">
@@ -51,40 +487,181 @@
             <h1 class="main-title" id="header-main">Hey!</h1>
         </header>
 
-        <!-- ... (DEINE RESTLICHEN VIEWS BLEIBEN) ... -->
-        
-        <!-- NEUE ADMIN VIEW -->
-        <div id="view-admin" class="view">
-            <div class="admin-panel">
-                <h3>Admin Steuerung</h3>
-                <input type="number" id="admin-amount" placeholder="Betrag (€)" style="width:100%; padding:10px; margin-bottom:10px;">
-                <button class="admin-btn btn-purple" onclick="handleMoney('add')">Hinzufügen</button>
-                <button class="admin-btn btn-orange" onclick="handleMoney('deduct')">Abbuchen</button>
-                <button class="admin-btn" onclick="switchTab('start')" style="background:#ccc;">Zurück</button>
+        <div class="balance-card">
+            <p class="balance-label" id="balance-title">Aktuelles Guthaben</p>
+            <p class="balance-amount" id="user-balance">0,00€</p>
+            <span class="balance-spent" id="extra-info" style="display: none;">Gesamt ausgegeben: 1,33€</span>
+        </div>
+
+        <!-- VIEW 1: START -->
+        <div id="view-start" class="view active">
+            
+            <button class="action-btn btn-blue" id="auth-btn" onclick="loginWithGoogle()">
+                <span>Mit Google anmelden</span>
+                <div class="btn-arrow"><i class="fa-brands fa-google"></i></div>
+            </button>
+
+            <p class="section-label">Schnellauswahl</p>
+            
+            <button class="action-btn btn-orange" onclick="switchTab('auszahlungen')">
+                <span>Auszahlungen ansehen</span>
+                <div class="btn-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+            </button>
+
+            <button class="action-btn btn-purple" onclick="switchTab('einzahlungen')">
+                <span>Einzahlungen ansehen</span>
+                <div class="btn-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+            </button>
+
+            <!-- Geheimer Admin Button (Nur Text) -->
+            <div class="hidden-admin-trigger" onclick="requestAdminAccess()">Admin Zugang</div>
+        </div>
+
+        <!-- VIEW 2: EINZAHLUNGEN -->
+        <div id="view-einzahlungen" class="view">
+            <div class="transaction-list">
+                <div class="transaction-item inflow">
+                    <div class="trans-icon-info">
+                        <div class="trans-icon"><i class="fa-solid fa-arrow-trend-up"></i></div>
+                        <div class="trans-details">
+                            <div class="trans-title">10€</div>
+                            <div class="trans-type">Eingehend</div>
+                        </div>
+                    </div>
+                    <div class="trans-date">25.7.2026</div>
+                </div>
+
+                <div class="transaction-item inflow">
+                    <div class="trans-icon-info">
+                        <div class="trans-icon"><i class="fa-solid fa-arrow-trend-up"></i></div>
+                        <div class="trans-details">
+                            <div class="trans-title">5€</div>
+                            <div class="trans-type">Eingehend</div>
+                        </div>
+                    </div>
+                    <div class="trans-date">23.7.2026</div>
+                </div>
             </div>
         </div>
 
-        <!-- ... (DEIN RESTLICHER BODY BLEIBT UNVERÄNDERT) ... -->
-        
+        <!-- VIEW 3: AUSZAHLUNGEN -->
+        <div id="view-auszahlungen" class="view">
+            <div class="transaction-list">
+                <div class="transaction-item outflow">
+                    <div class="trans-icon-info">
+                        <div class="trans-icon"><i class="fa-solid fa-arrow-trend-down"></i></div>
+                        <div class="trans-details">
+                            <div class="trans-title">1€</div>
+                            <div class="trans-type">Ausgehend</div>
+                        </div>
+                    </div>
+                    <div class="trans-date">25.7.2026</div>
+                </div>
+
+                <div class="transaction-item outflow">
+                    <div class="trans-icon-info">
+                        <div class="trans-icon"><i class="fa-solid fa-arrow-trend-down"></i></div>
+                        <div class="trans-details">
+                            <div class="trans-title">33ct</div>
+                            <div class="trans-type">Ausgehend</div>
+                        </div>
+                    </div>
+                    <div class="trans-date">23.7.2026</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW 4: ADMIN (Neu) -->
+        <div id="view-admin" class="view">
+            <p class="section-label">Geld verwalten & loggen</p>
+            <div class="admin-form">
+                <input type="email" id="target-user" placeholder="E-Mail des Nutzers (z.B. max@gmail.com)">
+                <input type="number" id="target-amount" placeholder="Betrag in € (z.B. 10.50)" step="0.01">
+                
+                <div class="admin-btn-group">
+                    <button class="admin-btn add" onclick="modifyUserBalance('add')">Hinzufügen</button>
+                    <button class="admin-btn sub" onclick="modifyUserBalance('sub')">Abbuchen</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="qr-floating-btn" onclick="toggleQR(true)">
+            <i class="fa-solid fa-qrcode"></i>
+        </div>
+
+        <div id="qr-screen" class="qr-modal">
+            <h2>Dein QR-Code</h2>
+            <div class="qr-card">
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=Zollamt-Jachenau-7.34" alt="QR Code">
+            </div>
+            <button class="close-btn" onclick="toggleQR(false)">Schließen</button>
+        </div>
+
         <nav class="bottom-nav">
-            <!-- (Dein Code bleibt gleich) -->
-            <div class="nav-item active" onclick="checkAdminAccess()"> <!-- Bonus: Klick auf ein Icon trigger Admin check -->
-                <i class="fa-solid fa-lock"></i>
+            <div class="nav-item active" id="nav-start" onclick="switchTab('start')">
+                <i class="fa-solid fa-house"></i>
+                <span>Start</span>
+            </div>
+            <div class="nav-item" id="nav-einzahlungen" onclick="switchTab('einzahlungen')">
+                <i class="fa-solid fa-piggy-bank"></i>
+                <span>Einzahlungen</span>
+            </div>
+            <div class="nav-item" id="nav-auszahlungen" onclick="switchTab('auszahlungen')">
+                <i class="fa-solid fa-receipt"></i>
+                <span>Auszahlungen</span>
             </div>
         </nav>
+
     </div>
 
     <script>
-        // ... (DEIN VORHANDENES JS BLEIBT ERHALTEN) ...
+        // --- 1. Firebase Setup ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyD3kppZkw_z7LesZavzyqOq-L8x0aK4NsE",
+            authDomain: "durchagngssystem.firebaseapp.com",
+            databaseURL: "https://durchagngssystem-default-rtdb.firebaseio.com",
+            projectId: "durchagngssystem",
+            storageBucket: "durchagngssystem.firebasestorage.app",
+            messagingSenderId: "681623652861",
+            appId: "1:681623652861:web:5e54850cb9bb64a156f194"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.database();
 
-        // NEUE FUNKTION FÜR ADMIN
-        async function checkAdminAccess() {
-            const user = auth.currentUser;
-            if (!user || user.email !== "patrick.x.roth@gmail.com") {
-                alert("Nicht autorisiert!");
+        let currentUser = null;
+
+        // Listener: Schaut, ob jemand eingeloggt ist
+        auth.onAuthStateChanged(user => {
+            currentUser = user;
+            if(user) {
+                document.getElementById('auth-btn').innerHTML = `
+                    <span>Eingeloggt: ${user.displayName.split(' ')[0]}</span>
+                    <div class="btn-arrow"><i class="fa-solid fa-check"></i></div>
+                `;
+                document.getElementById('auth-btn').style.background = "#16a34a"; // Grün machen
+                syncMyBalance(user);
+            }
+        });
+
+        // --- 2. Login ---
+        function loginWithGoogle() {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            auth.signInWithPopup(provider).catch(err => alert("Login Fehler: " + err.message));
+        }
+
+        // --- 3. Admin Bereich ---
+        function requestAdminAccess() {
+            if (!currentUser) {
+                alert("Du musst dich zuerst anmelden!");
                 return;
             }
-            const code = prompt("Admin-Code eingeben:");
+            if (currentUser.email !== 'patrick.x.roth@gmail.com') {
+                alert("Zugriff verweigert. Diese Seite ist nur für den Admin.");
+                return;
+            }
+            
+            const code = prompt("Bitte Admin-Code eingeben:");
             if (code === "2014") {
                 switchTab('admin');
             } else {
@@ -92,31 +669,128 @@
             }
         }
 
-        async function handleMoney(action) {
-            const amount = parseFloat(document.getElementById('admin-amount').value);
-            const user = auth.currentUser;
-            if(!user || isNaN(amount)) return;
-
-            const dbRef = ref(db, 'users/' + user.uid + '/balance');
-            const snapshot = await get(dbRef);
-            let currentBalance = snapshot.exists() ? snapshot.val() : 0;
-
-            let newBalance = (action === 'add') ? currentBalance + amount : currentBalance - amount;
-            
-            await update(ref(db, 'users/' + user.uid), { balance: newBalance });
-            
-            // Log erstellen
-            push(ref(db, 'logs/' + user.uid), {
-                type: action,
-                amount: amount,
-                timestamp: Date.now()
-            });
-            
-            alert("Erfolgreich durchgeführt.");
+        // Firebase-Keys dürfen keine Punkte enthalten. Funktion zum saubermachen der E-Mails:
+        function sanitizeEmail(email) {
+            return email.replace(/\./g, ',');
         }
 
-        // Erweitere switchTab Funktion um 'admin' Case:
-        // switchTab('admin') -> setze view-admin auf active
+        // Lädt live das Guthaben des aktuell eingeloggten Users
+        function syncMyBalance(user) {
+            const safeEmail = sanitizeEmail(user.email);
+            db.ref('users/' + safeEmail + '/balance').on('value', (snapshot) => {
+                const bal = snapshot.val() || 0;
+                // Update in der UI: ersetze Punkt durch Komma im deutschen Format
+                document.getElementById('user-balance').innerText = bal.toFixed(2).replace('.', ',') + "€";
+            });
+        }
+
+        // Admin Funktion: Geld beim Ziel-User abbuchen oder hinzufügen
+        function modifyUserBalance(type) {
+            const targetEmailInput = document.getElementById('target-user').value.trim();
+            const amountInput = parseFloat(document.getElementById('target-amount').value);
+
+            if (!targetEmailInput || isNaN(amountInput) || amountInput <= 0) {
+                alert("Bitte gültige E-Mail und Betrag eingeben!");
+                return;
+            }
+
+            const safeTargetEmail = sanitizeEmail(targetEmailInput);
+            const userRef = db.ref('users/' + safeTargetEmail + '/balance');
+            
+            // Transaktion durchführen (Verhindert Fehler, wenn Leute gleichzeitig was ändern)
+            userRef.transaction(currentBalance => {
+                let bal = currentBalance || 0;
+                if (type === 'add') {
+                    return bal + amountInput;
+                } else if (type === 'sub') {
+                    return bal - amountInput;
+                }
+            }, (error, committed, snapshot) => {
+                if (error) {
+                    alert("Ein Fehler ist aufgetreten: " + error.message);
+                } else if (committed) {
+                    // Wenn es geklappt hat, logge es in die Datenbank
+                    db.ref('logs/').push({
+                        admin: currentUser.email,
+                        targetUser: targetEmailInput,
+                        amount: amountInput,
+                        action: type === 'add' ? 'Einzahlung' : 'Abbuchung',
+                        timestamp: Date.now()
+                    });
+                    alert(`Erfolgreich: ${amountInput}€ wurden ${type === 'add' ? 'hinzugefügt' : 'abgebucht'}.`);
+                    document.getElementById('target-amount').value = ''; // Feld leeren
+                }
+            });
+        }
+
+        // --- 4. UI Steuerung (Tabs & Scroll) ---
+        const scrollPill = document.getElementById('scroll-pill');
+        let currentViewName = 'Start';
+
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 50) {
+                scrollPill.classList.add('visible');
+            } else {
+                scrollPill.classList.remove('visible');
+            }
+        });
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.view').forEach(view => view.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            
+            const subTitle = document.getElementById('header-sub');
+            const mainTitle = document.getElementById('header-main');
+            const extraInfo = document.getElementById('extra-info');
+
+            if(tabName === 'start') {
+                document.getElementById('view-start').classList.add('active');
+                document.getElementById('nav-start').classList.add('active');
+                subTitle.style.display = 'block';
+                subTitle.innerText = 'Zollamt Jachenau';
+                mainTitle.innerText = 'Hey!';
+                extraInfo.style.display = 'none';
+                currentViewName = 'Start';
+            } 
+            else if(tabName === 'einzahlungen') {
+                document.getElementById('view-einzahlungen').classList.add('active');
+                document.getElementById('nav-einzahlungen').classList.add('active');
+                subTitle.style.display = 'none';
+                mainTitle.innerText = 'Einzahlungen';
+                extraInfo.style.display = 'none';
+                currentViewName = 'Einzahlungen';
+            } 
+            else if(tabName === 'auszahlungen') {
+                document.getElementById('view-auszahlungen').classList.add('active');
+                document.getElementById('nav-auszahlungen').classList.add('active');
+                subTitle.style.display = 'none';
+                mainTitle.innerText = 'Auszahlungen';
+                extraInfo.style.display = 'inline-block';
+                currentViewName = 'Auszahlungen';
+            }
+            else if(tabName === 'admin') {
+                document.getElementById('view-admin').classList.add('active');
+                // Admin hat kein eigenes Bottom-Nav Icon, daher leuchten die anderen nicht.
+                subTitle.style.display = 'block';
+                subTitle.innerText = 'Patrick X. Roth';
+                mainTitle.innerText = 'Admin';
+                extraInfo.style.display = 'none';
+                currentViewName = 'Admin';
+            }
+
+            scrollPill.innerText = currentViewName;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function toggleQR(show) {
+            const qrScreen = document.getElementById('qr-screen');
+            if (show) {
+                qrScreen.classList.add('open');
+            } else {
+                qrScreen.classList.remove('open');
+            }
+        }
     </script>
 </body>
 </html>
+
