@@ -12,6 +12,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-messaging-compat.js"></script>
 
     <!-- QR Code Scanner Lib -->
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
@@ -130,7 +131,7 @@
         .qr-floating-btn { position: fixed; bottom: 116px; left: 50%; transform: translateX(130px); width: 56px; height: 56px; background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.4rem; box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4); cursor: pointer; z-index: 99; transition: transform 0.2s ease; }
         @media(max-width: 430px) { .qr-floating-btn { left: auto; right: 20px; transform: none; } }
 
-        /* Bottom Nav — now a floating pill, detached from the screen edge */
+        /* Bottom Nav — floating "liquid glass" pill, detached from the screen edge */
         .bottom-nav {
             position: fixed;
             bottom: 20px;
@@ -139,22 +140,63 @@
             width: calc(100% - 40px);
             max-width: 390px;
             height: 72px;
-            background: rgba(255, 255, 255, 0.72);
-            backdrop-filter: blur(20px) saturate(180%);
-            -webkit-backdrop-filter: blur(20px) saturate(180%);
-            border: 1px solid rgba(255, 255, 255, 0.6);
+            background:
+                linear-gradient(120deg, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0.08) 45%, rgba(255,255,255,0.35) 100%),
+                rgba(255, 255, 255, 0.55);
+            background-size: 250% 250%, 100% 100%;
+            background-position: 0% 50%, 0 0;
+            backdrop-filter: blur(22px) saturate(190%);
+            -webkit-backdrop-filter: blur(22px) saturate(190%);
+            border: 1px solid rgba(255, 255, 255, 0.65);
             border-radius: 32px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             padding: 0 8px;
             z-index: 100;
-            box-shadow: 0 16px 40px rgba(15, 23, 42, 0.14), 0 2px 6px rgba(15, 23, 42, 0.06);
+            box-shadow:
+                0 16px 40px rgba(15, 23, 42, 0.16),
+                0 2px 6px rgba(15, 23, 42, 0.06),
+                inset 0 1px 1px rgba(255,255,255,0.9),
+                inset 0 -6px 14px rgba(255,255,255,0.25);
+            animation: navSheen 9s ease-in-out infinite;
         }
-        .nav-item { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #94a3b8; font-size: 0.68rem; font-weight: 600; gap: 4px; flex: 1; height: 56px; margin: 0 2px; border-radius: 22px; cursor: pointer; transition: color 0.2s ease, background 0.25s ease; }
-        .nav-item i { font-size: 1.25rem; transition: transform 0.2s ease; }
-        .nav-item.active { color: var(--text-main); background: #f1f5f9; }
-        .nav-item.active i { transform: translateY(-1px); color: #0f172a; }
+        @keyframes navSheen {
+            0%, 100% { background-position: 0% 50%, 0 0; }
+            50% { background-position: 100% 50%, 0 0; }
+        }
+
+        /* The liquid blob that slides between tabs */
+        .nav-indicator {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            height: 56px;
+            border-radius: 22px;
+            background: rgba(255, 255, 255, 0.85);
+            box-shadow:
+                0 6px 14px rgba(15, 23, 42, 0.12),
+                inset 0 1px 2px rgba(255,255,255,1),
+                inset 0 -2px 4px rgba(15,23,42,0.04);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+            z-index: 0;
+            pointer-events: none;
+        }
+        .nav-indicator.squish { animation: liquidSquish 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        @keyframes liquidSquish {
+            0% { transform: translateX(var(--nav-x, 0)) scaleX(1); }
+            35% { transform: translateX(var(--nav-x, 0)) scaleX(1.18) scaleY(0.86); }
+            65% { transform: translateX(var(--nav-x, 0)) scaleX(0.94) scaleY(1.05); }
+            100% { transform: translateX(var(--nav-x, 0)) scaleX(1); }
+        }
+
+        .nav-item { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #94a3b8; font-size: 0.68rem; font-weight: 600; gap: 4px; flex: 1; height: 56px; margin: 0 2px; border-radius: 22px; cursor: pointer; transition: color 0.25s ease; }
+        .nav-item i { font-size: 1.25rem; transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        .nav-item.active { color: var(--text-main); }
+        .nav-item.active i { transform: translateY(-2px) scale(1.08); color: #0f172a; }
+        .nav-item:active i { transform: scale(0.85); }
 
         /* QR-Code Modal */
         .qr-modal { position: fixed; top: 0; left: 50%; transform: translateX(-50%) translateY(100%); width: 100%; max-width: 430px; height: 100%; background: #f1f5f9; z-index: 200; transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); display: flex; flex-direction: column; align-items: center; padding: 40px 24px 140px 24px; }
@@ -203,6 +245,11 @@
                 <div class="empty-state">Lade Meldungen...</div>
             </div>
 
+            <button class="action-btn" id="notify-btn" style="background:#0f172a;" onclick="enableNotifications()">
+                <span>Benachrichtigungen aktivieren</span>
+                <div class="btn-arrow"><i class="fa-solid fa-bell"></i></div>
+            </button>
+
             <p class="section-label" style="margin-top: 20px;">Schnellauswahl</p>
             <button class="action-btn btn-orange" onclick="switchTab('auszahlungen')">
                 <span>Auszahlungen ansehen</span>
@@ -227,6 +274,10 @@
 
         <!-- VIEW 3: EINZAHLUNGEN -->
         <div id="view-einzahlungen" class="view">
+            <div class="section-header">
+                <p class="section-label">Verlauf</p>
+                <span class="show-more-link" onclick="exportTransactionsCSV('inflow')"><i class="fa-solid fa-download"></i> Als CSV exportieren</span>
+            </div>
             <div class="transaction-list" id="inflow-list">
                 <div class="empty-state">Lade Einzahlungen...</div>
             </div>
@@ -234,6 +285,10 @@
 
         <!-- VIEW 4: AUSZAHLUNGEN -->
         <div id="view-auszahlungen" class="view">
+            <div class="section-header">
+                <p class="section-label">Verlauf</p>
+                <span class="show-more-link" onclick="exportTransactionsCSV('outflow')"><i class="fa-solid fa-download"></i> Als CSV exportieren</span>
+            </div>
             <div class="transaction-list" id="outflow-list">
                 <div class="empty-state">Lade Auszahlungen...</div>
             </div>
@@ -275,9 +330,21 @@
             </div>
             
             <!-- Alle Nutzer Übersicht -->
-            <p class="section-label">Alle Registrierten Nutzer</p>
+            <div class="section-header">
+                <p class="section-label">Alle Registrierten Nutzer</p>
+            </div>
+            <input type="text" id="user-search" placeholder="Nutzer suchen (E-Mail)..." oninput="renderAdminUserList(this.value)" style="padding: 14px 16px; border-radius: 12px; border: 1px solid #cbd5e1; font-size: 0.95rem; outline: none;">
             <div class="admin-form" style="padding: 12px;" id="admin-user-list">
                 <div class="empty-state">Lade Nutzer...</div>
+            </div>
+
+            <!-- Zeitraum abschließen -->
+            <p class="section-label">Zeitraum abschließen</p>
+            <div class="admin-form">
+                <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; margin: 0;">
+                    Archiviert die aktuellen Guthaben &amp; Ausgaben aller Nutzer (z.B. am Camp-Ende) und setzt danach alle Konten auf 0€ zurück. Die Historie bleibt einsehbar in der Datenbank unter <code>history/</code>.
+                </p>
+                <button class="admin-btn set" style="width:100%;" onclick="closeOutPeriod()"><i class="fa-solid fa-box-archive"></i> Guthaben aller Nutzer archivieren &amp; zurücksetzen</button>
             </div>
 
             <!-- Logs -->
@@ -303,6 +370,7 @@
 
         <!-- Bottom Navbar (Jetzt 4 Items) -->
         <nav class="bottom-nav">
+            <div class="nav-indicator" id="nav-indicator"></div>
             <div class="nav-item active" id="nav-start" onclick="switchTab('start')">
                 <i class="fa-solid fa-house"></i><span>Start</span>
             </div>
@@ -336,6 +404,39 @@
 
         let currentUser = null;
         let isAdmin = false;
+        let cachedUserTransactions = []; // für den CSV-Export der eigenen Historie
+
+        // Exportiert die eigene Transaktionshistorie als CSV-Datei zum Download.
+        // filterType: 'all' | 'inflow' | 'outflow'
+        function exportTransactionsCSV(filterType) {
+            if (!currentUser) return alert("Zuerst anmelden!");
+            const rows = cachedUserTransactions.filter(t => filterType === 'all' || t.type === filterType);
+            if (rows.length === 0) return alert("Keine Transaktionen zum Exportieren vorhanden.");
+
+            const header = ['Datum', 'Typ', 'Betrag (€)', 'Grund'];
+            const csvLines = [header.join(';')];
+            rows.forEach(t => {
+                const typeLabel = t.type === 'inflow' ? 'Einzahlung' : 'Auszahlung';
+                const line = [
+                    formatDate(t.timestamp),
+                    typeLabel,
+                    t.amount.toFixed(2).replace('.', ','),
+                    (t.reason || '').replace(/;/g, ',')
+                ];
+                csvLines.push(line.join(';'));
+            });
+
+            const csvContent = '\uFEFF' + csvLines.join('\r\n'); // BOM für korrekte Umlaute in Excel
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `transaktionen_${filterType}_${new Date().toISOString().slice(0,10)}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
 
         // Listener: Auth State
         auth.onAuthStateChanged(user => {
@@ -359,9 +460,76 @@
             auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(err => alert("Login Fehler: " + err.message));
         }
 
+        // --- Push-Benachrichtigungen (Firebase Cloud Messaging) ---
+        // WICHTIG: Damit das tatsächlich Benachrichtigungen verschickt, werden zusätzlich benötigt:
+        //   1) Eine Datei "firebase-messaging-sw.js" im selben Hosting-Root (siehe separate Datei).
+        //   2) Ein VAPID-Key aus der Firebase Console (Project Settings → Cloud Messaging).
+        //   3) Eine kleine Cloud Function, die bei neuer Meldung/Transaktion die gespeicherten
+        //      Tokens ausliest und die Push-Nachricht verschickt (siehe separate Datei sendNotifications.js).
+        // Ohne diese drei Teile speichert dieser Button zwar den Token, es wird aber nichts verschickt.
+        const VAPID_KEY = "HIER-DEINEN-VAPID-KEY-AUS-DER-FIREBASE-CONSOLE-EINTRAGEN";
+
+        async function enableNotifications() {
+            if (!currentUser) return alert("Zuerst anmelden!");
+            if (!('Notification' in window) || !('serviceWorker' in navigator)) {
+                return alert("Dieser Browser unterstützt keine Push-Benachrichtigungen.");
+            }
+            try {
+                const permission = await Notification.requestPermission();
+                if (permission !== 'granted') {
+                    return alert("Benachrichtigungen wurden nicht erlaubt.");
+                }
+                const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+                const messaging = firebase.messaging();
+                const token = await messaging.getToken({ vapidKey: VAPID_KEY, serviceWorkerRegistration: registration });
+
+                await db.ref(`users/${sanitizeEmail(currentUser.email)}/fcmToken`).set(token);
+
+                const btn = document.getElementById('notify-btn');
+                btn.querySelector('span').innerText = 'Benachrichtigungen aktiv';
+                btn.style.background = '#16a34a';
+                alert("Benachrichtigungen aktiviert!");
+            } catch (err) {
+                alert("Fehler beim Aktivieren der Benachrichtigungen: " + err.message);
+            }
+        }
+
         // --- Utils ---
         function sanitizeEmail(email) { return email.replace(/\./g, ','); }
         function unsanitizeEmail(email) { return email.replace(/,/g, '.'); }
+
+        // Whitelist-Sanitizer für die Meldungen: nur einfache Textformatierung erlaubt (b/i/u/s/br),
+        // alles andere (script, img, Attribute wie onclick, style, etc.) wird entfernt. Schützt vor XSS,
+        // da der Editor-Inhalt sonst 1:1 per innerHTML für alle Nutzer gerendert wird.
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str == null ? '' : String(str);
+            return div.innerHTML;
+        }
+
+        function sanitizeAnnouncementHtml(dirtyHtml) {
+            const allowedTags = new Set(['B', 'STRONG', 'I', 'EM', 'U', 'S', 'STRIKE', 'BR', 'DIV', 'SPAN', 'P']);
+            const template = document.createElement('template');
+            template.innerHTML = dirtyHtml;
+
+            function clean(node) {
+                [...node.childNodes].forEach(child => {
+                    if (child.nodeType === Node.ELEMENT_NODE) {
+                        if (!allowedTags.has(child.tagName)) {
+                            // Unerlaubtes Tag: durch seinen reinen Text ersetzen statt komplett zu löschen
+                            const text = document.createTextNode(child.textContent);
+                            child.replaceWith(text);
+                            return;
+                        }
+                        // Alle Attribute entfernen (onclick, style, src, href, ...)
+                        [...child.attributes].forEach(attr => child.removeAttribute(attr.name));
+                        clean(child);
+                    }
+                });
+            }
+            clean(template.content);
+            return template.innerHTML;
+        }
         function formatDate(timestamp) {
             const date = new Date(timestamp);
             return `${date.getDate()}.${date.getMonth()+1}.${date.getFullYear()} ${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
@@ -388,6 +556,7 @@
                 const transactions = [];
                 snap.forEach(child => { transactions.push(child.val()); });
                 transactions.reverse();
+                cachedUserTransactions = transactions; // für CSV-Export zwischenspeichern
 
                 transactions.forEach(t => {
                     const isPlus = t.type === 'inflow';
@@ -435,7 +604,7 @@
                     <div class="announcement-card">
                         ${deleteBtnHtml}
                         <div class="announcement-header">
-                            <div class="announcement-title">${a.title}</div>
+                            <div class="announcement-title">${escapeHtml(a.title)}</div>
                             <div class="announcement-date">${formatDate(a.timestamp)}</div>
                         </div>
                         <div class="announcement-content">${a.content}</div>
@@ -461,8 +630,10 @@
 
         function publishAnnouncement() {
             const title = document.getElementById('announce-title').value.trim();
-            const content = document.getElementById('announce-content').innerHTML.trim();
-            if(!title || !content || content === "<br>") return alert("Titel und Inhalt dürfen nicht leer sein.");
+            const rawContent = document.getElementById('announce-content').innerHTML.trim();
+            if(!title || !rawContent || rawContent === "<br>") return alert("Titel und Inhalt dürfen nicht leer sein.");
+
+            const content = sanitizeAnnouncementHtml(rawContent);
 
             db.ref('announcements').push({
                 title: title,
@@ -482,38 +653,123 @@
             }
         }
 
+        let cachedUsers = []; // { safeEmail, email, balance, spent } — gecacht, damit die Suche ohne neue DB-Anfrage filtern kann
+
         function loadAdminUserList() {
             db.ref('users').on('value', snap => {
-                const list = document.getElementById('admin-user-list');
-                list.innerHTML = '';
-                let hasUsers = false;
+                cachedUsers = [];
                 snap.forEach(child => {
                     const safeEmail = child.key;
-                    const email = unsanitizeEmail(safeEmail);
-                    const data = child.val().data || { balance: 0 };
-                    const bal = (data.balance || 0).toFixed(2).replace('.', ',');
-                    
-                    list.innerHTML += `
-                        <div class="user-list-item" onclick="document.getElementById('target-user').value='${email}'; window.scrollTo(0,0);" style="cursor:pointer;">
-                            <strong>${email}</strong>
-                            <span style="color:#16a34a; font-weight:bold;">${bal}€</span>
-                        </div>`;
-                    hasUsers = true;
+                    const data = (child.val() && child.val().data) || { balance: 0, spent: 0 };
+                    cachedUsers.push({
+                        safeEmail,
+                        email: unsanitizeEmail(safeEmail),
+                        balance: data.balance || 0,
+                        spent: data.spent || 0
+                    });
                 });
-                if(!hasUsers) list.innerHTML = '<div class="empty-state">Noch keine registrierten Nutzer.</div>';
+                cachedUsers.sort((a, b) => a.email.localeCompare(b.email));
+                const currentSearch = document.getElementById('user-search') ? document.getElementById('user-search').value : '';
+                renderAdminUserList(currentSearch);
             });
         }
 
-        function modifyUserBalance(actionType) {
+        function renderAdminUserList(filterText) {
+            const list = document.getElementById('admin-user-list');
+            if (!list) return;
+            const needle = (filterText || '').trim().toLowerCase();
+            const filtered = needle ? cachedUsers.filter(u => u.email.toLowerCase().includes(needle)) : cachedUsers;
+
+            list.innerHTML = '';
+            if (filtered.length === 0) {
+                list.innerHTML = `<div class="empty-state">${cachedUsers.length === 0 ? 'Noch keine registrierten Nutzer.' : 'Keine Nutzer gefunden.'}</div>`;
+                return;
+            }
+            filtered.forEach(u => {
+                const bal = u.balance.toFixed(2).replace('.', ',');
+                const balColor = u.balance < 0 ? '#dc2626' : '#16a34a';
+                list.innerHTML += `
+                    <div class="user-list-item" onclick="document.getElementById('target-user').value='${escapeHtml(u.email)}'; window.scrollTo(0,0);" style="cursor:pointer;">
+                        <strong>${escapeHtml(u.email)}</strong>
+                        <span style="color:${balColor}; font-weight:bold;">${bal}€</span>
+                    </div>`;
+            });
+        }
+
+        // Archiviert alle aktuellen Guthaben/Ausgaben unter history/{timestamp}/ und setzt danach
+        // balance & spent aller Nutzer auf 0 zurück. Praktisch z.B. am Ende eines Zeltlagers.
+        async function closeOutPeriod() {
+            if (cachedUsers.length === 0) return alert("Keine Nutzer geladen.");
+            const confirmed = confirm(`Wirklich die Guthaben von ${cachedUsers.length} Nutzer(n) archivieren und auf 0€ zurücksetzen?\nDiese Aktion kann nicht direkt rückgängig gemacht werden.`);
+            if (!confirmed) return;
+
+            const periodId = Date.now();
+            const archive = {};
+            cachedUsers.forEach(u => {
+                archive[u.safeEmail] = { balance: u.balance, spent: u.spent, email: u.email };
+            });
+
+            try {
+                await db.ref(`history/${periodId}`).set({
+                    closedBy: currentUser.email,
+                    timestamp: periodId,
+                    users: archive
+                });
+
+                const updates = {};
+                cachedUsers.forEach(u => {
+                    updates[`users/${u.safeEmail}/data/balance`] = 0;
+                    updates[`users/${u.safeEmail}/data/spent`] = 0;
+                });
+                await db.ref().update(updates);
+
+                await db.ref('admin_logs').push({
+                    admin: currentUser.email, target: 'ALLE NUTZER', action: 'period_close',
+                    amount: cachedUsers.length, reason: `Zeitraum abgeschlossen (history/${periodId})`, timestamp: periodId
+                });
+
+                alert("Zeitraum archiviert und alle Guthaben zurückgesetzt.");
+            } catch (e) {
+                alert("Fehler beim Archivieren: " + e.message);
+            }
+        }
+
+        async function modifyUserBalance(actionType) {
             const emailInput = document.getElementById('target-user').value.trim();
             const reasonInput = document.getElementById('target-reason').value.trim();
             const amountInput = parseFloat(document.getElementById('target-amount').value);
 
             if (!emailInput || isNaN(amountInput) || amountInput < 0) return alert("Gültige E-Mail & Betrag eingeben!");
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailInput)) return alert("Das sieht nicht wie eine gültige E-Mail-Adresse aus.");
 
             const safeTargetEmail = sanitizeEmail(emailInput);
             const dataRef = db.ref(`users/${safeTargetEmail}/data`);
-            
+
+            // 1) Existiert der Nutzer überhaupt? Tippfehler sollen nicht stillschweigend
+            // einen neuen, leeren Account anlegen.
+            let existingSnap;
+            try {
+                existingSnap = await dataRef.get();
+            } catch (e) {
+                return alert("Fehler beim Prüfen des Nutzers: " + e.message);
+            }
+            const userExists = existingSnap.exists();
+            const currentBalance = userExists ? (existingSnap.val().balance || 0) : 0;
+
+            if (!userExists) {
+                const create = confirm(`Für "${emailInput}" gibt es noch keinen Account.\nDiese E-Mail wurde vermutlich noch nie über Google-Login verwendet.\n\nTrotzdem einen neuen Eintrag anlegen?`);
+                if (!create) return;
+            }
+
+            // 2) Würde die Aktion das Guthaben ins Minus schicken? Dann noch einmal nachfragen.
+            const projectedBalance = actionType === 'add' ? currentBalance + amountInput
+                : actionType === 'sub' ? currentBalance - amountInput
+                : amountInput; // 'set'
+            if (projectedBalance < 0) {
+                const proceed = confirm(`Achtung: Das Guthaben würde dadurch auf ${projectedBalance.toFixed(2).replace('.', ',')}€ (negativ) sinken.\nTrotzdem fortfahren?`);
+                if (!proceed) return;
+            }
+
             dataRef.transaction(currentData => {
                 let data = currentData || { balance: 0, spent: 0 };
                 if (actionType === 'add') data.balance += amountInput;
@@ -585,6 +841,34 @@
         const mainNavItems = ['start', 'meldungen', 'einzahlungen', 'auszahlungen'];
         let currentViewName = 'Start';
 
+        // --- Liquid Glass Nav Indicator ---
+        // Slides + "squishes" the glass blob to the active tab, like a droplet settling into place.
+        function moveNavIndicator(activeElId) {
+            const indicator = document.getElementById('nav-indicator');
+            const activeItem = document.getElementById(activeElId);
+            const nav = document.querySelector('.bottom-nav');
+            if (!indicator || !activeItem || !nav) return;
+
+            const navRect = nav.getBoundingClientRect();
+            const itemRect = activeItem.getBoundingClientRect();
+            const x = itemRect.left - navRect.left - 8; // account for nav padding
+            const width = itemRect.width;
+
+            indicator.style.setProperty('--nav-x', `${x}px`);
+            indicator.style.width = `${width}px`;
+            indicator.style.transform = `translateX(${x}px)`;
+
+            // Retrigger the squish animation on every move
+            indicator.classList.remove('squish');
+            void indicator.offsetWidth; // force reflow so the animation restarts
+            indicator.classList.add('squish');
+        }
+        window.addEventListener('resize', () => {
+            const active = document.querySelector('.nav-item.active');
+            if (active) moveNavIndicator(active.id);
+        });
+        window.addEventListener('load', () => moveNavIndicator('nav-start'));
+
         window.addEventListener('scroll', () => {
             const isScrolled = window.scrollY > 50;
             pillLeft.classList.toggle('visible', isScrolled);
@@ -638,6 +922,17 @@
             } else {
                 pillLeft.innerHTML = currentViewName;
                 pillLeft.style.pointerEvents = 'none';
+            }
+
+            // Move (or hide) the liquid glass indicator behind the active tab
+            const indicator = document.getElementById('nav-indicator');
+            const activeNavItem = document.querySelector('.nav-item.active');
+            if (activeNavItem) {
+                indicator.style.opacity = '1';
+                moveNavIndicator(activeNavItem.id);
+            } else {
+                // No matching nav item (e.g. Admin view) — fade the blob out
+                indicator.style.opacity = '0';
             }
 
             window.scrollTo({ top: 0, behavior: 'smooth' });
