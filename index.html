@@ -1,38 +1,30 @@
-
 <!DOCTYPE html>
 <html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Zollamt Jachenau Dashboard</title>
-    <!-- Google Fonts & FontAwesome Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- PWA & Icons -->
     <link rel="icon" type="image/png" href="favicon.png">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0f172a">
     <link rel="apple-touch-icon" href="favicon.png">
 
-    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
-    <!-- QR Code Scanner Lib -->
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     
-    <!-- Konfetti Lib -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
-    <!-- Chart.js Lib -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
         /* CSS Variablen für einfaches Theme-Switching */
         :root {
-            /* Light Theme Standardwerte */
             --bg-color: #f8fafc;
             --text-main: #0f172a;
             --text-muted: #64748b;
@@ -43,27 +35,28 @@
             --card-bg: rgba(255, 255, 255, 0.75);
             --shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
             
-            /* Buttons & Gradients */
             --gradient-btn-1: linear-gradient(135deg, #ff9233 0%, #ff5e62 100%);
             --gradient-btn-2: linear-gradient(135deg, #7028ff 0%, #ff4b91 100%);
             
-            /* Glassmorphism Navigation */
             --nav-glass-bg: linear-gradient(120deg, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0.08) 45%, rgba(255,255,255,0.35) 100%), rgba(255, 255, 255, 0.55);
             --nav-glass-border: rgba(255, 255, 255, 0.65);
             --nav-indicator-bg: rgba(255, 255, 255, 0.85);
             --nav-indicator-shadow: 0 6px 14px rgba(15, 23, 42, 0.12), inset 0 1px 2px rgba(255,255,255,1), inset 0 -2px 4px rgba(15,23,42,0.04);
             
-            --pin-btn-bg: #ffffff;
             --empty-state-bg: rgba(255,255,255,0.5);
             
-            /* Spezifische Highlight-Farben */
             --inflow-bg: #dcfce7;
             --inflow-text: #16a34a;
             --outflow-bg: #fee2e2;
             --outflow-text: #dc2626;
+            
+            --skeleton-bg1: #e2e8f0;
+            --skeleton-bg2: #cbd5e1;
+            
+            /* NEU: Fade-Out am unteren Rand (Light) */
+            --bottom-fade: linear-gradient(to top, rgba(248, 250, 252, 1) 15%, rgba(248, 250, 252, 0) 100%);
         }
 
-        /* Dark Theme Variablen */
         body.dark-theme {
             --bg-color: #0f172a;
             --text-main: #f8fafc;
@@ -80,51 +73,36 @@
             --nav-indicator-bg: rgba(51, 65, 85, 0.85);
             --nav-indicator-shadow: 0 6px 14px rgba(0, 0, 0, 0.3), inset 0 1px 2px rgba(255,255,255,0.1), inset 0 -2px 4px rgba(0,0,0,0.5);
             
-            --pin-btn-bg: #1e293b;
             --empty-state-bg: rgba(30, 41, 59, 0.5);
             
             --inflow-bg: rgba(22, 163, 74, 0.2);
             --inflow-text: #4ade80;
             --outflow-bg: rgba(220, 38, 38, 0.2);
             --outflow-text: #f87171;
+            
+            --skeleton-bg1: #334155;
+            --skeleton-bg2: #475569;
+
+            /* NEU: Fade-Out am unteren Rand (Dark) */
+            --bottom-fade: linear-gradient(to top, rgba(15, 23, 42, 1) 15%, rgba(15, 23, 42, 0) 100%);
         }
 
-        * {
-            margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
 
         body { background-color: var(--bg-color); color: var(--text-main); display: flex; justify-content: center; min-height: 100vh; overflow-x: hidden; transition: background-color 0.3s ease, color 0.3s ease; }
-
-        /* Der Hintergrund für den App-Container erbt ebenfalls die Farben */
         .app-container { width: 100%; max-width: 430px; background: transparent; min-height: 100vh; display: flex; flex-direction: column; position: relative; overflow-x: hidden; padding-bottom: 120px; transition: background-color 0.3s ease; }
 
-        /* Theme Toggle Button */
-        .theme-toggle-btn {
-            background: var(--item-bg); color: var(--text-main); border: 1px solid var(--border-color); border-radius: 50%; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; cursor: pointer; transition: transform 0.2s, background 0.3s; box-shadow: var(--shadow);
-        }
+        /* Theme Toggle */
+        .theme-toggle-btn { background: var(--item-bg); color: var(--text-main); border: 1px solid var(--border-color); border-radius: 50%; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; cursor: pointer; transition: transform 0.2s, background 0.3s; box-shadow: var(--shadow); }
         .theme-toggle-btn:active { transform: scale(0.9); }
 
         /* Scroll Pills */
-        .scroll-pill {
-            position: fixed; top: 20px; z-index: 150;
-            background: var(--nav-glass-bg);
-            background-size: 250% 250%, 100% 100%; background-position: 0% 50%, 0 0;
-            backdrop-filter: blur(18px) saturate(190%); -webkit-backdrop-filter: blur(18px) saturate(190%);
-            border: 1px solid var(--nav-glass-border); border-radius: 50px; color: var(--text-main);
-            opacity: 0; visibility: hidden; transform: scale(0.85);
-            transition: opacity 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), visibility 0.35s, transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12), inset 0 1px 1px rgba(255,255,255,0.2), inset 0 -4px 10px rgba(0,0,0,0.1);
-            display: flex; align-items: center; justify-content: center; animation: navSheen 9s ease-in-out infinite;
-        }
+        .scroll-pill { position: fixed; top: 20px; z-index: 150; background: var(--nav-glass-bg); backdrop-filter: blur(18px) saturate(190%); -webkit-backdrop-filter: blur(18px) saturate(190%); border: 1px solid var(--nav-glass-border); border-radius: 50px; color: var(--text-main); opacity: 0; visibility: hidden; transform: scale(0.85); transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12); display: flex; align-items: center; justify-content: center; }
         .scroll-pill.visible { opacity: 1; visibility: visible; transform: scale(1); }
-        .scroll-pill-left { left: 20px; padding: 12px 24px; font-size: 1.05rem; font-weight: 800; cursor: default; }
-        
-        .scroll-pill-right { right: 20px; padding: 4px; pointer-events: auto; cursor: pointer; transition: transform 0.2s;}
-        .scroll-pill-right:active { transform: scale(0.9); }
+        .scroll-pill-left { left: 20px; padding: 12px 24px; font-size: 1.05rem; font-weight: 800; }
+        .scroll-pill-right { right: 20px; padding: 4px; pointer-events: auto; cursor: pointer; }
         .scroll-pill-right img { width: 42px; height: 42px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border-color); }
-        
-        .back-icon { margin-right: 10px; cursor: pointer; color: #3b82f6; transition: transform 0.2s; }
-        .back-icon:active { transform: scale(0.8); }
+        .back-icon { margin-right: 10px; cursor: pointer; color: #3b82f6; }
 
         /* Header */
         header { padding: 30px 24px 10px 24px; display: flex; justify-content: space-between; align-items: center; }
@@ -132,10 +110,21 @@
         .main-title { font-size: 2.5rem; font-weight: 900; letter-spacing: -1px; text-transform: uppercase; }
 
         /* Dashboard Card */
-        .balance-card { background: var(--card-bg); backdrop-filter: blur(10px); border: 1px solid var(--nav-glass-border); margin: 10px 24px 24px 24px; padding: 30px 24px; border-radius: 28px; box-shadow: var(--shadow); text-align: center; transition: transform 0.3s ease, background 0.3s; }
+        .balance-card { background: var(--card-bg); backdrop-filter: blur(10px); border: 1px solid var(--nav-glass-border); margin: 10px 24px 24px 24px; padding: 30px 24px; border-radius: 28px; box-shadow: var(--shadow); text-align: center; transition: all 0.3s ease; }
         .balance-label { font-size: 0.9rem; color: var(--text-muted); font-weight: 500; margin-bottom: 8px; }
         .balance-amount { font-size: 3rem; font-weight: 800; letter-spacing: -1px; color: var(--text-main); }
         .balance-spent { margin-top: 10px; font-size: 0.85rem; color: var(--outflow-text); font-weight: 600; background: var(--outflow-bg); display: inline-block; padding: 4px 12px; border-radius: 20px; transition: all 0.3s ease;}
+
+        /* NEU: Mini-Statistik Grid auf der Startseite */
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 8px; }
+        .stat-card { background: var(--item-bg); padding: 16px; border-radius: 20px; border: 1px solid var(--border-color); box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 4px; }
+        .stat-card-label { font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-card-value { font-size: 1.35rem; font-weight: 850; color: var(--text-main); letter-spacing: -0.5px; }
+
+        /* Skeletons */
+        @keyframes shimmer { 0% { background-position: -400px 0; } 100% { background-position: 400px 0; } }
+        .skeleton { background: var(--skeleton-bg1); background-image: linear-gradient(to right, var(--skeleton-bg1) 0%, var(--skeleton-bg2) 20%, var(--skeleton-bg1) 40%, var(--skeleton-bg1) 100%); background-repeat: no-repeat; background-size: 800px 100%; animation: shimmer 1.5s infinite linear forwards; border-radius: 20px; border: 1px solid var(--border-color); }
+        .skeleton-block { height: 80px; width: 100%; margin-bottom: 12px; }
 
         /* Views */
         .view { display: none; padding: 0 24px; flex-direction: column; gap: 16px; animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
@@ -152,12 +141,13 @@
         .btn-orange { background: var(--gradient-btn-1); }
         .btn-purple { background: var(--gradient-btn-2); }
         .btn-blue { background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%); } 
+        .btn-dark { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); }
         .btn-arrow { width: 40px; height: 40px; background: rgba(255, 255, 255, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; }
-        .action-btn:disabled, .admin-btn:disabled, .scan-trigger-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important; }
+        .action-btn:disabled, .admin-btn:disabled, .scan-trigger-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
         /* Lists */
         .transaction-list, .announcement-list { display: flex; flex-direction: column; gap: 12px; }
-        .transaction-item { display: flex; align-items: center; justify-content: space-between; background: var(--item-bg); padding: 16px; border-radius: 20px; box-shadow: var(--shadow); border: 1px solid var(--border-color); transition: background 0.3s, border-color 0.3s; }
+        .transaction-item { display: flex; align-items: center; justify-content: space-between; background: var(--item-bg); padding: 16px; border-radius: 20px; box-shadow: var(--shadow); border: 1px solid var(--border-color); }
         .trans-icon-info { display: flex; align-items: center; gap: 16px; }
         .trans-icon { width: 48px; height: 48px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
         .inflow .trans-icon { background: var(--inflow-bg); color: var(--inflow-text); }
@@ -165,12 +155,13 @@
         .trans-details .trans-title { font-weight: 700; font-size: 1.05rem; margin-bottom: 2px; color: var(--text-main); }
         .trans-details .trans-type { font-size: 0.8rem; color: var(--text-muted); }
         .trans-date { font-size: 0.8rem; color: var(--text-muted); font-weight: 500; text-align: right; }
-        .empty-state { text-align: center; color: var(--text-muted); padding: 20px; font-size: 0.9rem; background: var(--empty-state-bg); border-radius: 20px; border: 1px dashed var(--input-border); transition: background 0.3s; }
+        
+        .empty-state { text-align: center; color: var(--text-muted); padding: 20px; font-size: 0.9rem; background: var(--empty-state-bg); border-radius: 20px; border: 1px dashed var(--input-border); }
         .load-more-btn { width: 100%; padding: 14px; border-radius: 16px; border: 1px dashed var(--input-border); background: var(--empty-state-bg); color: var(--text-main); font-weight: 700; cursor: pointer; font-size: 0.9rem; }
-        .load-more-btn:active { transform: scale(0.98); }
 
         /* Announcements Cards */
-        .announcement-card { background: var(--item-bg); border-radius: 20px; padding: 16px; border: 1px solid var(--border-color); box-shadow: var(--shadow); position: relative; transition: background 0.3s;}
+        .announcement-card { background: var(--item-bg); border-radius: 20px; padding: 16px; border: 1px solid var(--border-color); box-shadow: var(--shadow); position: relative; transition: transform 0.2s; }
+        .announcement-card:active { transform: scale(0.98); }
         .announcement-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
         .announcement-title { font-weight: 800; font-size: 1.1rem; color: var(--text-main); }
         .announcement-date { font-size: 0.75rem; color: var(--text-muted); font-weight: 600; }
@@ -179,147 +170,84 @@
         .is-admin .announcement-delete-btn { display: block; }
         
         /* Admin Formulare */
-        .admin-form { background: var(--item-bg); padding: 24px; border-radius: 24px; box-shadow: var(--shadow); border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 16px; transition: background 0.3s; }
-        .admin-form input { padding: 16px; border-radius: 12px; border: 1px solid var(--input-border); font-size: 1rem; outline: none; transition: border-color 0.2s, background 0.3s, color 0.3s; font-family: 'Inter', sans-serif; background: var(--bg-color); color: var(--text-main); }
+        .admin-form { background: var(--item-bg); padding: 24px; border-radius: 24px; box-shadow: var(--shadow); border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 16px; }
+        .admin-form input { padding: 16px; border-radius: 12px; border: 1px solid var(--input-border); font-size: 1rem; outline: none; background: var(--bg-color); color: var(--text-main); }
         .admin-form input:focus { border-color: #3b82f6; }
         .admin-btn-group { display: flex; gap: 8px; flex-wrap: wrap;}
-        .admin-btn { flex: 1; min-width: 40%; padding: 14px; border: none; border-radius: 12px; font-weight: 700; color: white; cursor: pointer; transition: transform 0.2s ease; }
-        .admin-btn:active { transform: scale(0.95); }
+        .admin-btn { flex: 1; min-width: 40%; padding: 14px; border: none; border-radius: 12px; font-weight: 700; color: white; cursor: pointer; }
         .admin-btn.add { background: #16a34a; }
         .admin-btn.sub { background: #dc2626; }
         .admin-btn.set { background: #0f172a; flex-basis: 100%;}
-        
-        body.dark-theme .admin-btn.set { background: #3b82f6; } /* Im Darkmode blauer Admin Button, damit man ihn sieht */
+        body.dark-theme .admin-btn.set { background: #3b82f6; } 
 
-        /* WYSIWYG Editor */
         .editor-toolbar { display: flex; gap: 8px; margin-bottom: 8px; background: var(--bg-color); padding: 8px; border-radius: 10px; border: 1px solid var(--border-color); }
         .editor-toolbar button { background: var(--item-bg); border: 1px solid var(--input-border); border-radius: 6px; padding: 6px 12px; cursor: pointer; font-weight: bold; color: var(--text-main); }
-        .editor-toolbar button:hover { opacity: 0.8; }
         .editor-area { min-height: 100px; padding: 16px; border-radius: 12px; border: 1px solid var(--input-border); outline: none; font-size: 0.95rem; line-height: 1.5; background: var(--bg-color); color: var(--text-main); }
         .editor-area:empty:before { content: attr(placeholder); color: var(--text-muted); pointer-events: none; display: block; }
-        .editor-area:focus { border-color: #3b82f6; }
 
-        /* Admin Extra Lists */
         .user-list-item { display: flex; justify-content: space-between; padding: 12px; border-bottom: 1px solid var(--border-color); font-size: 0.9rem; }
         .user-list-item:last-child { border-bottom: none; }
         
         .scan-trigger-btn { background: #3b82f6; color: white; border: none; padding: 16px; border-radius: 12px; font-weight: bold; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 10px; }
-        #qr-reader-container { display: none; width: 100%; overflow: hidden; border-radius: 12px; border: 2px solid #3b82f6; }
-        #qr-reader { width: 100%; }
         
-        .hidden-admin-trigger { text-align: center; margin-top: 20px; font-size: 0.8rem; color: var(--text-muted); opacity: 0.5; cursor: pointer; padding: 10px; }
+        /* Neues Scanner Overlay CSS */
+        #qr-reader-container {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 9999;
+            flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(5px);
+        }
+        #qr-reader {
+            width: 90%; max-width: 380px; background: white; border-radius: 20px; overflow: hidden;
+            box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); animation: pulseScan 2s infinite;
+        }
+        @keyframes pulseScan {
+            0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(59, 130, 246, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+        }
+        .scanner-close { position: absolute; top: 30px; right: 30px; color: white; font-size: 2.5rem; cursor: pointer; z-index: 10000; }
 
         /* Floating QR */
-        .qr-floating-btn { 
-            position: fixed; bottom: 116px; left: 50%; transform: translateX(130px); width: 56px; height: 56px; background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.4rem; box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4); cursor: pointer; z-index: 99; 
-            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease; 
-        }
-        @media (hover: hover) {
-            .qr-floating-btn:hover { transform: translateX(130px) scale(1.15); box-shadow: 0 14px 35px rgba(59, 130, 246, 0.6); }
-        }
-        .qr-floating-btn:active { transform: translateX(130px) scale(0.9); }
-        @media(max-width: 430px) { 
-            .qr-floating-btn { left: auto; right: 20px; transform: none; } 
-        }
-        @media (hover: hover) and (max-width: 430px) {
-            .qr-floating-btn:hover { transform: scale(1.15); }
-        }
-        @media(max-width: 430px) {
-            .qr-floating-btn:active { transform: scale(0.9); }
-        }
+        .qr-floating-btn { position: fixed; bottom: 116px; left: 50%; transform: translateX(130px); width: 56px; height: 56px; background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.4rem; box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4); cursor: pointer; z-index: 99; }
+        @media(max-width: 430px) { .qr-floating-btn { left: auto; right: 20px; transform: none; } }
+
+        /* NEU: Bottom Fade Out (Hinter Nav & Floating QR) */
+        .bottom-fade { position: fixed; bottom: 0; left: 0; right: 0; height: 75px; background: var(--bottom-fade); z-index: 90; pointer-events: none; transition: background 0.3s ease; }
 
         /* Bottom Nav */
-        .bottom-nav {
-            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-            width: calc(100% - 40px); max-width: 390px; height: 72px;
-            background: var(--nav-glass-bg);
-            background-size: 250% 250%, 100% 100%; background-position: 0% 50%, 0 0;
-            backdrop-filter: blur(22px) saturate(190%); -webkit-backdrop-filter: blur(22px) saturate(190%);
-            border: 1px solid var(--nav-glass-border); border-radius: 32px;
-            display: flex; justify-content: space-between; align-items: center; padding: 0 8px; z-index: 100;
-            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.16), 0 2px 6px rgba(0, 0, 0, 0.06), inset 0 1px 1px rgba(255,255,255,0.2), inset 0 -6px 14px rgba(0,0,0,0.1);
-            animation: navSheen 9s ease-in-out infinite; transition: background 0.3s, border-color 0.3s;
-        }
-
-        .nav-indicator {
-            position: absolute; top: 8px; left: 8px; height: 56px; border-radius: 22px;
-            background: var(--nav-indicator-bg);
-            box-shadow: var(--nav-indicator-shadow);
-            backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
-            transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease, background 0.3s;
-            z-index: 0; pointer-events: none;
-        }
-        .nav-indicator.squish { animation: liquidSquish 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
-        .nav-indicator.dragging { transition: none; }
-        
-        .nav-item { position: relative; z-index: 1; display: flex; flex-direction: row; align-items: center; justify-content: center; color: var(--text-muted); font-size: 0.72rem; font-weight: 600; gap: 0; flex: 1 1 0; height: 56px; margin: 0 2px; border-radius: 22px; cursor: pointer; transition: color 0.25s ease, flex-grow 0.45s cubic-bezier(0.34, 1.2, 0.64, 1); overflow: hidden; touch-action: none; }
-        .nav-item i { font-size: 1.2rem; transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); }
-        .nav-item .nav-label { display: inline-block; max-width: 0; opacity: 0; margin-left: 0; white-space: nowrap; overflow: hidden; transition: max-width 0.4s cubic-bezier(0.34, 1.2, 0.64, 1), opacity 0.25s ease 0.05s, margin-left 0.4s cubic-bezier(0.34, 1.2, 0.64, 1); }
-        .nav-item.active { color: var(--text-main); flex-grow: 1.9; cursor: grab; }
+        .bottom-nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: calc(100% - 40px); max-width: 390px; height: 72px; background: var(--nav-glass-bg); backdrop-filter: blur(22px) saturate(190%); border: 1px solid var(--nav-glass-border); border-radius: 32px; display: flex; justify-content: space-between; align-items: center; padding: 0 8px; z-index: 100; box-shadow: 0 16px 40px rgba(0, 0, 0, 0.16); }
+        .nav-indicator { position: absolute; top: 8px; left: 8px; height: 56px; border-radius: 22px; background: var(--nav-indicator-bg); box-shadow: var(--nav-indicator-shadow); backdrop-filter: blur(6px); transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), width 0.5s; z-index: 0; pointer-events: none; }
+        .nav-item { position: relative; z-index: 1; display: flex; flex-direction: row; align-items: center; justify-content: center; color: var(--text-muted); font-size: 0.72rem; font-weight: 600; flex: 1 1 0; height: 56px; margin: 0 2px; border-radius: 22px; cursor: pointer; overflow: hidden; touch-action: none; }
+        .nav-item i { font-size: 1.2rem; transition: transform 0.35s; }
+        .nav-item .nav-label { display: inline-block; max-width: 0; opacity: 0; margin-left: 0; white-space: nowrap; transition: all 0.4s; }
+        .nav-item.active { color: var(--text-main); flex-grow: 1.9; }
         .nav-item.active .nav-label { max-width: 90px; opacity: 1; margin-left: 7px; }
         .nav-item.active i { transform: translateY(0) scale(1.05); color: var(--text-main); }
-        .nav-item:active i { transform: scale(0.85); }
-        .nav-item.active:active { cursor: grabbing; }
 
-        /* QR-Code Modal & Keyboard PIN Modal */
-        .qr-modal, .pin-modal { position: fixed; top: 0; left: 50%; transform: translateX(-50%) translateY(100%); width: 100%; max-width: 430px; height: 100%; background: var(--modal-bg); z-index: 200; transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), background 0.3s; display: flex; flex-direction: column; align-items: center; padding: 40px 24px 140px 24px; }
-        .qr-modal.open, .pin-modal.open { transform: translateX(-50%) translateY(0); }
-        
+        /* QR-Code Modal */
+        .qr-modal { position: fixed; top: 0; left: 50%; transform: translateX(-50%) translateY(100%); width: 100%; max-width: 430px; height: 100%; background: var(--modal-bg); z-index: 200; transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); display: flex; flex-direction: column; align-items: center; padding: 40px 24px 140px 24px; }
+        .qr-modal.open { transform: translateX(-50%) translateY(0); }
         .qr-modal h2 { font-size: 2rem; font-weight: 900; margin-top: 20px; margin-bottom: 40px; text-transform: uppercase; color: var(--text-main);}
         .qr-card { background: white; padding: 24px; border-radius: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.15); }
         .qr-card img { width: 100%; max-width: 260px; display: block; }
+        .close-btn { width: 100%; padding: 20px; background: linear-gradient(135deg, #ff4141 0%, #ff7343 100%); color: white; border: none; border-radius: 24px; font-size: 1.2rem; font-weight: 900; text-transform: uppercase; cursor: pointer; margin-top: auto; }
 
         .logout-link-btn { width: 100%; padding: 16px; background: var(--item-bg); color: var(--outflow-text); border: 1px solid var(--border-color); border-radius: 16px; font-size: 0.95rem; font-weight: 700; cursor: pointer; margin-top: 12px; display: flex; align-items: center; justify-content: center; gap: 8px; }
-        .logout-link-btn:active { transform: scale(0.97); }
         
-        .close-btn { 
-            width: 100%; padding: 20px; background: linear-gradient(135deg, #ff4141 0%, #ff7343 100%); color: white; border: none; border-radius: 24px; font-size: 1.2rem; font-weight: 900; text-transform: uppercase; cursor: pointer; margin-top: auto;
-            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease, filter 0.2s ease;
-        }
-        .close-btn:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 12px 25px rgba(255, 65, 65, 0.4); filter: brightness(1.1); }
-        .close-btn:active { transform: translateY(1px) scale(0.97); box-shadow: 0 4px 10px rgba(255, 65, 65, 0.2); }
-
-        /* Custom Keypad */
-        .pin-display { display: flex; gap: 16px; margin-top: 20px; margin-bottom: 40px; }
-        .pin-dot { width: 18px; height: 18px; border-radius: 50%; border: 3px solid var(--input-border); background: transparent; transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); }
-        .pin-dot.filled { background: var(--text-main); border-color: var(--text-main); transform: scale(1.15); }
-        .pin-dot.error { border-color: #ef4444; background: #ef4444; }
-        .pin-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; width: 100%; max-width: 320px; margin-top: auto; margin-bottom: auto; }
-        .pin-btn { background: var(--pin-btn-bg); border: 1px solid var(--border-color); color: var(--text-main); font-size: 1.8rem; font-weight: 800; width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: var(--shadow); transition: transform 0.1s ease, background-color 0.3s, color 0.3s; }
-        .pin-btn:active { transform: scale(0.9); opacity: 0.8; }
-        .pin-btn.action-clear { background: var(--outflow-bg); color: var(--outflow-text); font-size: 1.3rem; }
-        .pin-btn.action-close { background: var(--bg-color); color: var(--text-muted); font-size: 1.3rem; }
-
-        /* PIN shake animation (was missing) */
-        @keyframes shakeShake {
-            0%, 100% { transform: translateX(-50%) translateY(0); }
-            20% { transform: translateX(-50%) translateX(-10px); }
-            40% { transform: translateX(-50%) translateX(10px); }
-            60% { transform: translateX(-50%) translateX(-8px); }
-            80% { transform: translateX(-50%) translateX(8px); }
-        }
-        .pin-modal.shake-shake { animation: shakeShake 0.4s ease-in-out; }
-        
-        /* Easter Egg */
-        .falling-profile { position: fixed; top: 0; border-radius: 50%; border: 2px solid white; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 10000; pointer-events: none; transform: translateY(-200px); transition: transform 1.2s cubic-bezier(0.34, 1.56, 0.64, 1); }
-        .falling-profile.drop-off { transition: transform 0.8s cubic-bezier(0.55, 0.085, 0.68, 0.53); }
-        
-        /* Chart Container */
         .chart-container { position: relative; width: 100%; height: 250px; margin-top: 10px; }
 
-        /* Toast notifications (replaces alert()) */
+        /* Toast notifications */
         .toast-container { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); width: 100%; max-width: 400px; padding: 0 16px; z-index: 500; display: flex; flex-direction: column; gap: 10px; align-items: center; pointer-events: none; }
-        .toast { pointer-events: auto; width: 100%; max-width: 380px; background: var(--item-bg); color: var(--text-main); border: 1px solid var(--border-color); box-shadow: 0 10px 30px rgba(0,0,0,0.15); border-radius: 16px; padding: 14px 16px; font-size: 0.9rem; font-weight: 600; display: flex; align-items: center; gap: 10px; opacity: 0; transform: translateY(-20px) scale(0.95); transition: opacity 0.3s cubic-bezier(0.34,1.56,0.64,1), transform 0.3s cubic-bezier(0.34,1.56,0.64,1); }
+        .toast { pointer-events: auto; width: 100%; max-width: 380px; background: var(--item-bg); color: var(--text-main); border: 1px solid var(--border-color); box-shadow: 0 10px 30px rgba(0,0,0,0.15); border-radius: 16px; padding: 14px 16px; font-size: 0.9rem; font-weight: 600; display: flex; align-items: center; gap: 10px; opacity: 0; transform: translateY(-20px) scale(0.95); transition: opacity 0.3s, transform 0.3s; }
         .toast.show { opacity: 1; transform: translateY(0) scale(1); }
         .toast i { font-size: 1.1rem; flex-shrink: 0; }
         .toast.toast-success i { color: var(--inflow-text); }
         .toast.toast-error i { color: var(--outflow-text); }
         .toast.toast-info i { color: #3b82f6; }
 
-        /* Confirm modal (replaces confirm()) */
-        .confirm-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 600; display: flex; align-items: center; justify-content: center; opacity: 0; visibility: hidden; transition: opacity 0.25s ease, visibility 0.25s ease; padding: 24px; }
+        /* Confirm modal */
+        .confirm-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 600; display: flex; align-items: center; justify-content: center; opacity: 0; visibility: hidden; transition: opacity 0.25s ease; padding: 24px; }
         .confirm-overlay.open { opacity: 1; visibility: visible; }
-        .confirm-box { background: var(--item-bg); color: var(--text-main); border-radius: 24px; padding: 26px; width: 100%; max-width: 340px; box-shadow: 0 20px 50px rgba(0,0,0,0.25); transform: scale(0.9); transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1); }
+        .confirm-box { background: var(--item-bg); color: var(--text-main); border-radius: 24px; padding: 26px; width: 100%; max-width: 340px; box-shadow: 0 20px 50px rgba(0,0,0,0.25); transform: scale(0.9); transition: transform 0.25s; }
         .confirm-overlay.open .confirm-box { transform: scale(1); }
         .confirm-title { font-weight: 800; font-size: 1.1rem; margin-bottom: 8px; }
         .confirm-message { font-size: 0.9rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 20px; white-space: pre-line; }
@@ -328,14 +256,15 @@
         .confirm-cancel-btn { background: var(--bg-color); color: var(--text-main); }
         .confirm-ok-btn { background: #dc2626; color: white; }
         .confirm-ok-btn.neutral { background: #3b82f6; }
+        
+        .falling-profile { position: fixed; top: 0; border-radius: 50%; border: 2px solid white; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 10000; pointer-events: none; transform: translateY(-200px); transition: transform 1.2s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        .falling-profile.drop-off { transition: transform 0.8s cubic-bezier(0.55, 0.085, 0.68, 0.53); }
     </style>
 </head>
 <body>
 
-    <!-- Toast Container -->
     <div class="toast-container" id="toast-container"></div>
 
-    <!-- Confirm Modal -->
     <div class="confirm-overlay" id="confirm-overlay">
         <div class="confirm-box">
             <div class="confirm-title" id="confirm-title">Bist du sicher?</div>
@@ -347,7 +276,13 @@
         </div>
     </div>
 
-    <!-- Scroll Pills (Mit Easter Egg Onclick) -->
+    <div id="qr-reader-container">
+        <i class="fa-solid fa-xmark scanner-close" onclick="toggleScanner()"></i>
+        <div id="qr-reader"></div>
+    </div>
+
+    <datalist id="registered-users"></datalist>
+
     <div id="scroll-pill-left" class="scroll-pill scroll-pill-left">Start</div>
     <div id="scroll-pill-right" class="scroll-pill scroll-pill-right" onclick="triggerProfileEasterEgg()">
         <img id="user-profile-pic" src="https://via.placeholder.com/42?text=?" alt="Profil">
@@ -360,19 +295,22 @@
                 <p class="sub-title" id="header-sub">Zollamt Jachenau</p>
                 <h1 class="main-title" id="header-main">Hey!</h1>
             </div>
-            <!-- Neuer Dark Mode Button -->
-            <button class="theme-toggle-btn" onclick="toggleTheme()" id="theme-btn-icon" aria-label="Design umschalten (Hell/Dunkel)">
+            <button class="theme-toggle-btn" onclick="toggleTheme()" id="theme-btn-icon" aria-label="Design umschalten">
                 <i class="fa-solid fa-moon"></i>
             </button>
         </header>
 
         <div class="balance-card" id="main-balance-card">
             <p class="balance-label" id="balance-title">Aktuelles Guthaben</p>
-            <p class="balance-amount" id="user-balance">0,00€</p>
-            <span class="balance-spent" id="extra-info" style="display: none;">Gesamt ausgegeben: 0,00€</span>
+            <div style="display: flex; align-items: center; justify-content: center;">
+                <p class="balance-amount" id="user-balance">
+                    <i class="fa-solid fa-lock" style="font-size: 2rem; color: var(--text-muted);"></i>
+                </p>
+                <span id="balance-trend"></span>
+            </div>
+            <span class="balance-spent" id="extra-info" style="display: inline-block;">Bitte logge dich ein, um dein Guthaben zu sehen.</span>
         </div>
 
-        <!-- VIEW 1: START -->
         <div id="view-start" class="view active">
             
             <button class="action-btn btn-blue" id="auth-btn" onclick="loginWithGoogle()">
@@ -380,16 +318,54 @@
                 <div class="btn-arrow"><i class="fa-brands fa-google"></i></div>
             </button>
 
-            <!-- Meldungen Vorschau -->
+            <button class="action-btn btn-dark" id="admin-access-btn" style="display:none;" onclick="switchTab('admin')">
+                <span>Admin Dashboard</span>
+                <div class="btn-arrow"><i class="fa-solid fa-shield-halved"></i></div>
+            </button>
+
+            <div id="user-quick-stats" style="display: none;">
+                <p class="section-label">Dein Monat im Überblick</p>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <span class="stat-card-label">Ausgaben (Monat)</span>
+                        <span class="stat-card-value" id="stat-month-spent">0,00 €</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-card-label">Transaktionen</span>
+                        <span class="stat-card-value" id="stat-trans-count">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="recent-activity-section" style="display: none;">
+                <div class="section-header">
+                    <p class="section-label">Letzte Aktivitäten</p>
+                    <span class="show-more-link" onclick="switchTab('auszahlungen')">Alle ansehen</span>
+                </div>
+                <div class="transaction-list" id="recent-activity-preview">
+                    <div class="empty-state">Lade Aktivitäten...</div>
+                </div>
+            </div>
+
             <div class="section-header">
                 <p class="section-label">Aktuelle Meldungen</p>
                 <span class="show-more-link" onclick="switchTab('meldungen')">Mehr anzeigen</span>
             </div>
             <div class="announcement-list" id="announcements-preview">
-                <div class="empty-state">Lade Meldungen...</div>
+                <div class="skeleton skeleton-block"></div>
+                <div class="skeleton skeleton-block"></div>
             </div>
 
-            <p class="section-label" style="margin-top: 20px;">Schnellauswahl</p>
+            <p class="section-label" style="margin-top: 10px;">Schnellauswahl & Aktionen</p>
+            
+            <div class="announcement-card" style="display: flex; align-items: center; justify-content: space-between; cursor: pointer; border-left: 4px solid #3b82f6;" onclick="toggleUserQR(true)">
+                <div>
+                    <div class="announcement-title" style="font-size: 1rem;"><i class="fa-solid fa-qrcode" style="color: #3b82f6; margin-right: 8px;"></i>Guthaben aufladen?</div>
+                    <div class="announcement-content" style="font-size: 0.8rem; margin-top: 2px;">Zeige beim Admin schnell deinen QR-Code vor</div>
+                </div>
+                <i class="fa-solid fa-chevron-right" style="color: var(--text-muted); font-size: 0.9rem;"></i>
+            </div>
+
             <button class="action-btn btn-orange" onclick="switchTab('auszahlungen')">
                 <span>Auszahlungen ansehen</span>
                 <div class="btn-arrow"><i class="fa-solid fa-arrow-right"></i></div>
@@ -399,50 +375,43 @@
                 <div class="btn-arrow"><i class="fa-solid fa-arrow-right"></i></div>
             </button>
 
-            <!-- Geheimer Admin Button -->
-            <div class="hidden-admin-trigger" onclick="requestAdminAccess()">Admin Zugang</div>
-
-            <!-- Logout -->
-            <button class="logout-link-btn" id="logout-btn" style="display:none;" onclick="logoutUser()" aria-label="Abmelden">
+            <button class="logout-link-btn" id="logout-btn" style="display:none;" onclick="logoutUser()">
                 <i class="fa-solid fa-right-from-bracket"></i> Abmelden
             </button>
         </div>
 
-        <!-- VIEW 2: MELDUNGEN -->
         <div id="view-meldungen" class="view">
             <p class="section-label">Alle Meldungen</p>
             <div class="announcement-list" id="announcements-full-list">
-                <div class="empty-state">Lade Meldungen...</div>
+                <div class="skeleton skeleton-block"></div>
+                <div class="skeleton skeleton-block"></div>
+                <div class="skeleton skeleton-block"></div>
             </div>
         </div>
 
-        <!-- VIEW 3: EINZAHLUNGEN -->
         <div id="view-einzahlungen" class="view">
             <div class="section-header">
                 <p class="section-label">Verlauf</p>
                 <span class="show-more-link" onclick="exportTransactionsCSV('inflow')"><i class="fa-solid fa-download"></i> Als CSV exportieren</span>
             </div>
             <div class="transaction-list" id="inflow-list">
-                <div class="empty-state">Lade Einzahlungen...</div>
+                <div class="empty-state"><i class="fa-solid fa-lock" style="margin-bottom:8px;font-size:1.5rem;display:block;"></i>Bitte logge dich ein.</div>
             </div>
             <button class="load-more-btn" id="inflow-load-more" style="display:none;" onclick="showMoreTransactions('inflow')">Mehr anzeigen</button>
         </div>
 
-        <!-- VIEW 4: AUSZAHLUNGEN -->
         <div id="view-auszahlungen" class="view">
             <div class="section-header">
                 <p class="section-label">Verlauf</p>
                 <span class="show-more-link" onclick="exportTransactionsCSV('outflow')"><i class="fa-solid fa-download"></i> Als CSV exportieren</span>
             </div>
             <div class="transaction-list" id="outflow-list">
-                <div class="empty-state">Lade Auszahlungen...</div>
+                <div class="empty-state"><i class="fa-solid fa-lock" style="margin-bottom:8px;font-size:1.5rem;display:block;"></i>Bitte logge dich ein.</div>
             </div>
             <button class="load-more-btn" id="outflow-load-more" style="display:none;" onclick="showMoreTransactions('outflow')">Mehr anzeigen</button>
         </div>
 
-        <!-- VIEW 5: ADMIN -->
         <div id="view-admin" class="view">
-            <!-- Statistik Chart.js -->
             <p class="section-label">Lager-Statistiken</p>
             <div class="admin-form">
                 <div class="chart-container">
@@ -450,7 +419,6 @@
                 </div>
             </div>
 
-            <!-- Zeitverlauf Chart -->
             <p class="section-label">Aktivität über Zeit (letzte Buchungen)</p>
             <div class="admin-form">
                 <div class="chart-container">
@@ -458,7 +426,6 @@
                 </div>
             </div>
 
-            <!-- Neue Meldung verfassen -->
             <p class="section-label">Neue Meldung erstellen</p>
             <div class="admin-form">
                 <input type="text" id="announce-title" placeholder="Überschrift">
@@ -474,13 +441,11 @@
                 <button class="admin-btn add" style="width: 100%;" id="publish-announce-btn" onclick="publishAnnouncement()"><i class="fa-solid fa-paper-plane"></i> Meldung posten</button>
             </div>
 
-            <!-- Geld verwalten -->
             <p class="section-label">Guthaben verwalten</p>
             <div class="admin-form">
                 <button class="scan-trigger-btn" id="start-scan-btn" onclick="toggleScanner()"><i class="fa-solid fa-camera"></i> Nutzer QR scannen</button>
-                <div id="qr-reader-container"><div id="qr-reader"></div></div>
 
-                <input type="email" id="target-user" placeholder="E-Mail des Nutzers (Scan füllt aus)">
+                <input type="email" id="target-user" list="registered-users" placeholder="E-Mail des Nutzers (Scan füllt aus)">
                 <input type="text" id="target-reason" placeholder="Grund / Beschreibung (optional)">
                 <input type="number" id="target-amount" placeholder="Betrag in € (z.B. 10.50)" step="0.01" min="0">
                 
@@ -491,36 +456,34 @@
                 </div>
             </div>
             
-            <!-- Alle Nutzer Übersicht -->
             <div class="section-header">
                 <p class="section-label">Alle Registrierten Nutzer</p>
             </div>
-            <input type="text" id="user-search" placeholder="Nutzer suchen (E-Mail)..." oninput="onUserSearchInput(this.value)" style="padding: 14px 16px; border-radius: 12px; border: 1px solid var(--input-border); font-size: 0.95rem; outline: none; background: var(--item-bg); color: var(--text-main);" aria-label="Nutzer suchen">
+            <input type="text" id="user-search" placeholder="Nutzer suchen (E-Mail)..." oninput="onUserSearchInput(this.value)" style="padding: 14px 16px; border-radius: 12px; border: 1px solid var(--input-border); font-size: 0.95rem; outline: none; background: var(--item-bg); color: var(--text-main);">
             <div class="admin-form" style="padding: 12px;" id="admin-user-list">
                 <div class="empty-state">Lade Nutzer...</div>
             </div>
 
-            <!-- Zeitraum abschließen -->
             <p class="section-label">Zeitraum abschließen</p>
             <div class="admin-form">
                 <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; margin: 0;">
-                    Archiviert die aktuellen Guthaben &amp; Ausgaben aller Nutzer (z.B. am Camp-Ende) und setzt danach alle Konten auf 0€ zurück. Die Historie bleibt einsehbar in der Datenbank unter <code>history/</code>.
+                    Archiviert die aktuellen Guthaben &amp; Ausgaben aller Nutzer und setzt danach alle Konten auf 0€ zurück. Historie bleibt unter <code>history/</code> erhalten.
                 </p>
                 <button class="admin-btn set" style="width:100%;" id="close-period-btn" onclick="closeOutPeriod()"><i class="fa-solid fa-box-archive"></i> Guthaben aller Nutzer archivieren &amp; zurücksetzen</button>
             </div>
 
-            <!-- Logs -->
             <p class="section-label">Letzte System-Logs</p>
             <div class="transaction-list" id="admin-log-list" style="font-size: 0.8rem;">
                 <div class="empty-state">Keine Logs vorhanden.</div>
             </div>
         </div>
 
-        <div class="qr-floating-btn" onclick="toggleUserQR(true)" role="button" aria-label="Eigenen QR-Code anzeigen">
+        <div class="qr-floating-btn" onclick="toggleUserQR(true)" role="button">
             <i class="fa-solid fa-qrcode"></i>
         </div>
 
-        <!-- User QR Modal -->
+        <div class="bottom-fade"></div>
+
         <div id="qr-screen" class="qr-modal">
             <h2>Dein QR-Code</h2>
             <div class="qr-card">
@@ -530,35 +493,6 @@
             <button class="close-btn" onclick="toggleUserQR(false)">Schließen</button>
         </div>
 
-        <!-- Keyboard / PIN Screen Modal -->
-        <div id="pin-screen" class="pin-modal">
-            <h2 style="font-size: 1.8rem; font-weight: 900; letter-spacing: -0.5px; text-transform: uppercase; color: var(--text-main);">Admin Login</h2>
-            <p style="color: var(--text-muted); font-size: 0.95rem; font-weight: 500; margin-top: 6px;">Gib den System-PIN ein</p>
-            
-            <div class="pin-display">
-                <div class="pin-dot" id="pin-dot-0"></div>
-                <div class="pin-dot" id="pin-dot-1"></div>
-                <div class="pin-dot" id="pin-dot-2"></div>
-                <div class="pin-dot" id="pin-dot-3"></div>
-            </div>
-
-            <div class="pin-grid">
-                <div class="pin-btn" onclick="pressPinButton(1)">1</div>
-                <div class="pin-btn" onclick="pressPinButton(2)">2</div>
-                <div class="pin-btn" onclick="pressPinButton(3)">3</div>
-                <div class="pin-btn" onclick="pressPinButton(4)">4</div>
-                <div class="pin-btn" onclick="pressPinButton(5)">5</div>
-                <div class="pin-btn" onclick="pressPinButton(6)">6</div>
-                <div class="pin-btn" onclick="pressPinButton(7)">7</div>
-                <div class="pin-btn" onclick="pressPinButton(8)">8</div>
-                <div class="pin-btn" onclick="pressPinButton(9)">9</div>
-                <div class="pin-btn action-clear" onclick="clearPinInput()" aria-label="Eingabe löschen"><i class="fa-solid fa-delete-left"></i></div>
-                <div class="pin-btn" onclick="pressPinButton(0)">0</div>
-                <div class="pin-btn action-close" onclick="togglePinScreen(false)" aria-label="Schließen"><i class="fa-solid fa-xmark"></i></div>
-            </div>
-        </div>
-
-        <!-- Bottom Navbar -->
         <nav class="bottom-nav" id="bottom-nav">
             <div class="nav-indicator" id="nav-indicator"></div>
             <div class="nav-item active" id="nav-start" onclick="switchTab('start')">
@@ -578,7 +512,7 @@
     </div>
 
     <script>
-        // --- Toast / Confirm Helpers (replace alert()/confirm()) ---
+        // --- Toasts / Confirms ---
         function showToast(message, type = 'info', duration = 3500) {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
@@ -617,12 +551,10 @@
             });
         }
 
-        // --- Dark Mode Logik ---
         function initTheme() {
             const savedTheme = localStorage.getItem('theme');
             const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-            const useDark = savedTheme ? savedTheme === 'dark' : prefersDark;
-            if (useDark) {
+            if ((savedTheme && savedTheme === 'dark') || (!savedTheme && prefersDark)) {
                 document.body.classList.add('dark-theme');
                 document.getElementById('theme-btn-icon').innerHTML = '<i class="fa-solid fa-sun"></i>';
             }
@@ -639,12 +571,10 @@
                 localStorage.setItem('theme', 'light');
                 iconBtn.innerHTML = '<i class="fa-solid fa-moon"></i>';
             }
-            // Update Chart Colors if Admin view is active
             if(adminChartInstance) updateAdminChart();
             if(adminHistoryChartInstance) updateAdminHistoryChart();
         }
 
-        // --- Firebase Setup ---
         const firebaseConfig = {
             apiKey: "AIzaSyD3kppZkw_z7LesZavzyqOq-L8x0aK4NsE",
             authDomain: "durchagngssystem.firebaseapp.com",
@@ -661,83 +591,48 @@
         let currentUser = null;
         let isAdmin = false;
         let cachedUserTransactions = []; 
-        let currentPinBuffer = "";
         let inflowVisibleCount = 10;
         let outflowVisibleCount = 10;
         const TRANSACTIONS_PAGE_SIZE = 10;
 
-        // --- Chart.js ---
         let adminChartInstance = null;
         let adminHistoryChartInstance = null;
 
         function updateAdminChart() {
             if (cachedUsers.length === 0) return;
-            
-            let totalBalance = 0;
-            let totalSpent = 0;
+            let totalBalance = 0; let totalSpent = 0;
             cachedUsers.forEach(u => {
-                totalBalance += u.balance > 0 ? u.balance : 0; // Nur positives Guthaben summieren
+                totalBalance += u.balance > 0 ? u.balance : 0;
                 totalSpent += u.spent;
             });
-
             const ctx = document.getElementById('adminChart').getContext('2d');
             const isDark = document.body.classList.contains('dark-theme');
             const textColor = isDark ? '#f8fafc' : '#0f172a';
             const gridColor = isDark ? '#334155' : '#e2e8f0';
 
-            if (adminChartInstance) {
-                adminChartInstance.destroy();
-            }
-
+            if (adminChartInstance) adminChartInstance.destroy();
             adminChartInstance = new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels: ['Gesamt Guthaben', 'Gesamt Ausgaben'],
                     datasets: [{
-                        label: 'Betrag in €',
-                        data: [totalBalance, totalSpent],
-                        backgroundColor: [
-                            isDark ? 'rgba(74, 222, 128, 0.8)' : 'rgba(22, 163, 74, 0.8)', // Grün für Guthaben
-                            isDark ? 'rgba(248, 113, 113, 0.8)' : 'rgba(220, 38, 38, 0.8)'  // Rot für Ausgaben
-                        ],
+                        label: 'Betrag in €', data: [totalBalance, totalSpent],
+                        backgroundColor: [isDark ? 'rgba(74, 222, 128, 0.8)' : 'rgba(22, 163, 74, 0.8)', isDark ? 'rgba(248, 113, 113, 0.8)' : 'rgba(220, 38, 38, 0.8)'],
                         borderRadius: 8
                     }]
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: { color: gridColor },
-                            ticks: { color: textColor }
-                        },
-                        x: {
-                            grid: { display: false },
-                            ticks: { color: textColor, font: { weight: 'bold' } }
-                        }
-                    }
-                }
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: gridColor }, ticks: { color: textColor } }, x: { grid: { display: false }, ticks: { color: textColor, font: { weight: 'bold' } } } } }
             });
         }
 
-        // Zeitverlauf-Chart aus admin_logs (kumulierte Nettobuchungen über Zeit)
         let cachedAdminLogs = [];
         function updateAdminHistoryChart() {
             const canvas = document.getElementById('adminHistoryChart');
             if (!canvas) return;
             const ctx = canvas.getContext('2d');
             const isDark = document.body.classList.contains('dark-theme');
-            const textColor = isDark ? '#f8fafc' : '#0f172a';
-            const gridColor = isDark ? '#334155' : '#e2e8f0';
-
             const logs = [...cachedAdminLogs].filter(l => l.action === 'add' || l.action === 'sub').reverse();
-            let running = 0;
-            const labels = [];
-            const dataPoints = [];
+            let running = 0; const labels = []; const dataPoints = [];
             logs.forEach(l => {
                 running += (l.action === 'add' ? l.amount : -l.amount);
                 labels.push(formatDate(l.timestamp).split(' ')[0]);
@@ -745,73 +640,50 @@
             });
 
             if (adminHistoryChartInstance) adminHistoryChartInstance.destroy();
-
-            if (labels.length === 0) {
-                return;
-            }
-
+            if (labels.length === 0) return;
             adminHistoryChartInstance = new Chart(ctx, {
                 type: 'line',
-                data: {
-                    labels,
-                    datasets: [{
-                        label: 'Netto-Verlauf (€)',
-                        data: dataPoints,
-                        borderColor: '#3b82f6',
-                        backgroundColor: 'rgba(59, 130, 246, 0.15)',
-                        fill: true,
-                        tension: 0.3,
-                        pointRadius: 2
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        y: { grid: { color: gridColor }, ticks: { color: textColor } },
-                        x: { grid: { display: false }, ticks: { color: textColor, maxRotation: 45, minRotation: 45 } }
-                    }
-                }
+                data: { labels, datasets: [{ label: 'Netto-Verlauf (€)', data: dataPoints, borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.15)', fill: true, tension: 0.3, pointRadius: 2 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { grid: { color: isDark ? '#334155' : '#e2e8f0' }, ticks: { color: isDark ? '#f8fafc' : '#0f172a' } }, x: { grid: { display: false }, ticks: { color: isDark ? '#f8fafc' : '#0f172a', maxRotation: 45, minRotation: 45 } } } }
             });
         }
 
         function exportTransactionsCSV(filterType) {
             if (!currentUser) return showToast("Zuerst anmelden!", "error");
             const rows = cachedUserTransactions.filter(t => filterType === 'all' || t.type === filterType);
-            if (rows.length === 0) return showToast("Keine Transaktionen zum Exportieren vorhanden.", "info");
+            if (rows.length === 0) return showToast("Keine Transaktionen zum Exportieren.", "info");
 
-            const header = ['Datum', 'Typ', 'Betrag (€)', 'Grund'];
-            const csvLines = [header.join(';')];
+            const csvLines = [['Datum', 'Typ', 'Betrag (€)', 'Grund'].join(';')];
             rows.forEach(t => {
-                const typeLabel = t.type === 'inflow' ? 'Einzahlung' : 'Auszahlung';
-                const line = [
-                    formatDate(t.timestamp),
-                    typeLabel,
-                    t.amount.toFixed(2).replace('.', ','),
-                    (t.reason || '').replace(/;/g, ',')
-                ];
-                csvLines.push(line.join(';'));
+                csvLines.push([formatDate(t.timestamp), t.type === 'inflow' ? 'Einzahlung' : 'Auszahlung', t.amount.toFixed(2).replace('.', ','), (t.reason || '').replace(/;/g, ',')].join(';'));
             });
-
-            const csvContent = '\uFEFF' + csvLines.join('\r\n');
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const blob = new Blob(['\uFEFF' + csvLines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `transaktionen_${filterType}_${new Date().toISOString().slice(0,10)}.csv`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            showToast("CSV wurde exportiert.", "success");
+            const a = document.createElement('a'); a.href = url; a.download = `transaktionen_${filterType}_${new Date().toISOString().slice(0,10)}.csv`;
+            document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+            showToast("CSV exportiert.", "success");
         }
 
         auth.onAuthStateChanged(user => {
             currentUser = user;
+            const balanceEl = document.getElementById('user-balance');
+            const extraEl = document.getElementById('extra-info');
+            const trendEl = document.getElementById('balance-trend');
+            const statsSection = document.getElementById('user-quick-stats');
+            const activitySection = document.getElementById('recent-activity-section');
+            
             if(user) {
+                // Sicherer Admin-Check direkt über Auth-Attribut
                 isAdmin = (user.email === 'patrick.x.roth@gmail.com');
-                if(isAdmin) document.getElementById('app-container').classList.add('is-admin');
+                
+                if(isAdmin) {
+                    document.getElementById('app-container').classList.add('is-admin');
+                    document.getElementById('admin-access-btn').style.display = 'flex';
+                    loadAdminLogs();
+                    loadAdminUserList();
+                } else {
+                    document.getElementById('admin-access-btn').style.display = 'none';
+                }
 
                 document.getElementById('auth-btn').innerHTML = `<span>Eingeloggt als ${user.displayName.split(' ')[0]}</span><div class="btn-arrow"><i class="fa-solid fa-check"></i></div>`;
                 document.getElementById('auth-btn').style.background = "#16a34a";
@@ -821,64 +693,85 @@
                 if(user.photoURL) document.getElementById('user-profile-pic').src = user.photoURL;
                 document.getElementById('qr-image').src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(user.email)}`;
                 
+                extraEl.innerText = "Lade Guthaben...";
+                statsSection.style.display = 'block';
+                activitySection.style.display = 'block';
+                
                 startRealtimeListeners(user);
             } else {
+                isAdmin = false;
+                document.getElementById('app-container').classList.remove('is-admin');
+                document.getElementById('admin-access-btn').style.display = 'none';
                 document.getElementById('logout-btn').style.display = 'none';
+                document.getElementById('auth-btn').innerHTML = `<span>Mit Google anmelden</span><div class="btn-arrow"><i class="fa-brands fa-google"></i></div>`;
+                document.getElementById('auth-btn').style.background = "linear-gradient(135deg, #2563eb 0%, #1e40af 100%)";
+                document.getElementById('header-main').innerText = 'Hey!';
+                
+                // Klarer Logged-Out State
+                balanceEl.innerHTML = '<i class="fa-solid fa-lock" style="font-size: 2rem; color: var(--text-muted);"></i>';
+                trendEl.innerHTML = '';
+                extraEl.style.display = 'inline-block';
+                extraEl.innerText = 'Bitte logge dich ein, um dein Guthaben zu sehen.';
+                
+                statsSection.style.display = 'none';
+                activitySection.style.display = 'none';
+                
+                document.getElementById('inflow-list').innerHTML = '<div class="empty-state"><i class="fa-solid fa-lock" style="margin-bottom:8px;font-size:1.5rem;display:block;"></i>Bitte logge dich ein.</div>';
+                document.getElementById('outflow-list').innerHTML = '<div class="empty-state"><i class="fa-solid fa-lock" style="margin-bottom:8px;font-size:1.5rem;display:block;"></i>Bitte logge dich ein.</div>';
+                document.getElementById('inflow-load-more').style.display = 'none';
+                document.getElementById('outflow-load-more').style.display = 'none';
             }
         });
 
-        function loginWithGoogle() {
-            auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(err => showToast("Login Fehler: " + err.message, "error"));
-        }
-
+        function loginWithGoogle() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(err => showToast("Login Fehler: " + err.message, "error")); }
         async function logoutUser() {
             const confirmed = await showConfirm({ title: 'Abmelden?', message: 'Du wirst von diesem Gerät abgemeldet.', okLabel: 'Abmelden', neutral: true });
             if (!confirmed) return;
-            // Sicherheitshalber Scanner/Admin-Ansicht zurücksetzen
             stopScannerIfRunning();
-            isAdmin = false;
-            document.getElementById('app-container').classList.remove('is-admin');
-            auth.signOut().then(() => {
-                switchTab('start');
-                showToast("Erfolgreich abgemeldet.", "success");
-            }).catch(err => showToast("Fehler beim Abmelden: " + err.message, "error"));
+            auth.signOut().then(() => { switchTab('start'); showToast("Erfolgreich abgemeldet.", "success"); }).catch(err => showToast("Fehler: " + err.message, "error"));
         }
 
         function sanitizeEmail(email) { return email.replace(/\./g, ','); }
         function unsanitizeEmail(email) { return email.replace(/,/g, '.'); }
-        function escapeHtml(str) {
-            const div = document.createElement('div'); div.textContent = str == null ? '' : String(str); return div.innerHTML;
-        }
+        function escapeHtml(str) { const div = document.createElement('div'); div.textContent = str == null ? '' : String(str); return div.innerHTML; }
 
+        // Echte HTML-Sanitierung via DOMParser
         function sanitizeAnnouncementHtml(dirtyHtml) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(dirtyHtml, 'text/html');
             const allowedTags = new Set(['B', 'STRONG', 'I', 'EM', 'U', 'S', 'STRIKE', 'BR', 'DIV', 'SPAN', 'P']);
-            const template = document.createElement('template');
-            template.innerHTML = dirtyHtml;
-
+            
             function clean(node) {
-                [...node.childNodes].forEach(child => {
+                const toRemove = [];
+                node.childNodes.forEach(child => {
                     if (child.nodeType === Node.ELEMENT_NODE) {
-                        if (!allowedTags.has(child.tagName)) {
-                            const text = document.createTextNode(child.textContent);
-                            child.replaceWith(text); return;
+                        if (!allowedTags.has(child.tagName.toUpperCase())) {
+                            if (['SCRIPT', 'STYLE', 'IFRAME', 'OBJECT', 'EMBED', 'FORM'].includes(child.tagName.toUpperCase())) {
+                                toRemove.push(child);
+                            } else {
+                                const text = document.createTextNode(child.textContent);
+                                child.replaceWith(text);
+                            }
+                        } else {
+                            [...child.attributes].forEach(attr => {
+                                if (attr.name.toLowerCase().startsWith('on') || attr.value.toLowerCase().includes('javascript:')) {
+                                    child.removeAttribute(attr.name);
+                                }
+                            });
+                            clean(child);
                         }
-                        [...child.attributes].forEach(attr => child.removeAttribute(attr.name));
-                        clean(child);
                     }
                 });
+                toRemove.forEach(n => n.remove());
             }
-            clean(template.content);
-            return template.innerHTML;
+            clean(doc.body);
+            return doc.body.innerHTML;
         }
         
-        function formatDate(timestamp) {
-            const date = new Date(timestamp);
-            return `${date.getDate()}.${date.getMonth()+1}.${date.getFullYear()} ${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
-        }
+        function formatDate(timestamp) { const d = new Date(timestamp); return `${d.getDate()}.${d.getMonth()+1}.${d.getFullYear()} ${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`; }
 
         function startRealtimeListeners(user) {
             const safeEmail = sanitizeEmail(user.email);
-            
             db.ref(`users/${safeEmail}/data`).on('value', snap => {
                 const data = snap.val() || { balance: 0, spent: 0 };
                 document.getElementById('user-balance').innerText = (data.balance || 0).toFixed(2).replace('.', ',') + "€";
@@ -886,17 +779,63 @@
             });
 
             db.ref(`users/${safeEmail}/transactions`).orderByChild('timestamp').on('value', snap => {
-                let hasIn = false; let hasOut = false;
                 const transactions = [];
                 snap.forEach(child => { transactions.push(child.val()); });
                 transactions.reverse();
                 cachedUserTransactions = transactions;
 
-                // Reset Paginierung bei neuen Daten
-                inflowVisibleCount = TRANSACTIONS_PAGE_SIZE;
-                outflowVisibleCount = TRANSACTIONS_PAGE_SIZE;
-                renderTransactionList('inflow');
-                renderTransactionList('outflow');
+                // NEU: Berechnungen für Monats-Statistiken
+                const now = new Date();
+                const currentMonth = now.getMonth();
+                const currentYear = now.getFullYear();
+                let monthSpent = 0;
+
+                transactions.forEach(t => {
+                    const tDate = new Date(t.timestamp);
+                    if (t.type === 'outflow' && tDate.getMonth() === currentMonth && tDate.getFullYear() === currentYear) {
+                        monthSpent += t.amount;
+                    }
+                });
+
+                document.getElementById('stat-month-spent').innerText = monthSpent.toFixed(2).replace('.', ',') + " €";
+                document.getElementById('stat-trans-count').innerText = transactions.length;
+
+                // NEU: Letzte Aktivitäten auf der Startseite render
+                const recentContainer = document.getElementById('recent-activity-preview');
+                const top3 = transactions.slice(0, 3);
+                recentContainer.innerHTML = '';
+                if (top3.length === 0) {
+                    recentContainer.innerHTML = '<div class="empty-state">Noch keine Aktivitäten vorhanden.</div>';
+                } else {
+                    top3.forEach(t => {
+                        const isPlus = t.type === 'inflow';
+                        recentContainer.innerHTML += `
+                            <div class="transaction-item ${isPlus?'inflow':'outflow'}" style="padding: 12px 16px;">
+                                <div class="trans-icon-info">
+                                    <div class="trans-icon" style="width: 42px; height: 42px; font-size: 1rem;"><i class="fa-solid ${isPlus?'fa-arrow-trend-up':'fa-arrow-trend-down'}"></i></div>
+                                    <div class="trans-details">
+                                        <div class="trans-title" style="font-size: 0.95rem;">${t.amount.toFixed(2).replace('.', ',')}€</div>
+                                        <div class="trans-type">${isPlus?'Eingehend':'Ausgehend'}${t.reason ? ` - ${escapeHtml(t.reason)}` : ''}</div>
+                                    </div>
+                                </div>
+                                <div class="trans-date" style="font-size: 0.75rem;">${formatDate(t.timestamp).split(' ')[0]}</div>
+                            </div>`;
+                    });
+                }
+
+                // Guthaben-Trendanzeige updaten
+                const trendEl = document.getElementById('balance-trend');
+                if (transactions.length > 0) {
+                    const last = transactions[0];
+                    trendEl.innerHTML = last.type === 'inflow' 
+                        ? '<i class="fa-solid fa-circle-arrow-up" style="color: var(--inflow-text); margin-left: 12px; font-size: 1.5rem; vertical-align: text-bottom;"></i>'
+                        : '<i class="fa-solid fa-circle-arrow-down" style="color: var(--outflow-text); margin-left: 12px; font-size: 1.5rem; vertical-align: text-bottom;"></i>';
+                } else {
+                    trendEl.innerHTML = '';
+                }
+
+                inflowVisibleCount = TRANSACTIONS_PAGE_SIZE; outflowVisibleCount = TRANSACTIONS_PAGE_SIZE;
+                renderTransactionList('inflow'); renderTransactionList('outflow');
             });
         }
 
@@ -911,17 +850,15 @@
             listEl.innerHTML = '';
             if (toShow.length === 0) {
                 listEl.innerHTML = `<div class="empty-state">Noch keine ${type === 'inflow' ? 'Einzahlungen' : 'Auszahlungen'} vorhanden.</div>`;
-                loadMoreBtn.style.display = 'none';
-                return;
+                loadMoreBtn.style.display = 'none'; return;
             }
 
             toShow.forEach(t => {
                 const isPlus = t.type === 'inflow';
-                const iconClass = isPlus ? 'fa-arrow-trend-up' : 'fa-arrow-trend-down';
                 listEl.innerHTML += `
                     <div class="transaction-item ${isPlus?'inflow':'outflow'}">
                         <div class="trans-icon-info">
-                            <div class="trans-icon"><i class="fa-solid ${iconClass}"></i></div>
+                            <div class="trans-icon"><i class="fa-solid ${isPlus?'fa-arrow-trend-up':'fa-arrow-trend-down'}"></i></div>
                             <div class="trans-details">
                                 <div class="trans-title">${t.amount.toFixed(2).replace('.', ',')}€</div>
                                 <div class="trans-type">${isPlus?'Eingehend':'Ausgehend'}${t.reason ? ` - ${escapeHtml(t.reason)}` : ''}</div>
@@ -930,13 +867,11 @@
                         <div class="trans-date">${formatDate(t.timestamp)}</div>
                     </div>`;
             });
-
             loadMoreBtn.style.display = filtered.length > visibleCount ? 'block' : 'none';
         }
 
         function showMoreTransactions(type) {
-            if (type === 'inflow') inflowVisibleCount += TRANSACTIONS_PAGE_SIZE;
-            else outflowVisibleCount += TRANSACTIONS_PAGE_SIZE;
+            if (type === 'inflow') inflowVisibleCount += TRANSACTIONS_PAGE_SIZE; else outflowVisibleCount += TRANSACTIONS_PAGE_SIZE;
             renderTransactionList(type);
         }
 
@@ -956,7 +891,7 @@
             }
 
             announcements.forEach((a, index) => {
-                const deleteBtnHtml = `<button class="announcement-delete-btn" onclick="deleteAnnouncement('${a.id}')" title="Meldung löschen"><i class="fa-solid fa-trash"></i></button>`;
+                const deleteBtnHtml = `<button class="announcement-delete-btn" onclick="deleteAnnouncement('${a.id}')" title="Löschen"><i class="fa-solid fa-trash"></i></button>`;
                 const html = `
                     <div class="announcement-card">
                         ${deleteBtnHtml}
@@ -966,64 +901,14 @@
                         </div>
                         <div class="announcement-content">${a.content}</div>
                     </div>`;
-                
                 fullList.innerHTML += html;
-                if(index < 3) previewList.innerHTML += html;
+                if(index < 2) previewList.innerHTML += html;
             });
         });
 
-        async function requestAdminAccess() {
-            if (!currentUser) return showToast("Zuerst anmelden!", "error");
-            if (!isAdmin) return showToast("Zugriff verweigert.", "error");
-            togglePinScreen(true);
-        }
-
-        function togglePinScreen(show) {
-            const pinScreen = document.getElementById('pin-screen');
-            clearPinInput();
-            if (show) pinScreen.classList.add('open');
-            else pinScreen.classList.remove('open');
-        }
-
-        function pressPinButton(num) {
-            if (currentPinBuffer.length < 4) {
-                currentPinBuffer += num;
-                updatePinDotsUI();
-                if (currentPinBuffer.length === 4) {
-                    setTimeout(() => {
-                        if (currentPinBuffer === "2014") {
-                            togglePinScreen(false);
-                            switchTab('admin');
-                            loadAdminLogs();
-                            loadAdminUserList();
-                        } else {
-                            const pinModal = document.getElementById('pin-screen');
-                            pinModal.classList.add('shake-shake');
-                            for(let i=0; i<4; i++) document.getElementById(`pin-dot-${i}`).classList.add('error');
-                            setTimeout(() => { pinModal.classList.remove('shake-shake'); clearPinInput(); }, 500);
-                        }
-                    }, 200);
-                }
-            }
-        }
-
-        function clearPinInput() {
-            currentPinBuffer = "";
-            updatePinDotsUI();
-        }
-
-        function updatePinDotsUI() {
-            for (let i = 0; i < 4; i++) {
-                const dot = document.getElementById(`pin-dot-${i}`);
-                dot.className = "pin-dot";
-                if (i < currentPinBuffer.length) dot.classList.add('filled');
-            }
-        }
-
         function publishAnnouncement() {
             const btn = document.getElementById('publish-announce-btn');
-            if (btn.disabled) return; // Doppel-Klick-Sperre
-
+            if (btn.disabled) return;
             const title = document.getElementById('announce-title').value.trim();
             const rawContent = document.getElementById('announce-content').innerHTML.trim();
             if(!title || !rawContent || rawContent === "<br>") return showToast("Titel und Inhalt dürfen nicht leer sein.", "error");
@@ -1031,46 +916,40 @@
             const content = sanitizeAnnouncementHtml(rawContent);
 
             btn.disabled = true;
-            db.ref('announcements').push({
-                title: title, content: content, timestamp: Date.now(), author: currentUser.email
-            }).then(() => {
+            db.ref('announcements').push({ title, content, timestamp: Date.now(), author: currentUser.email })
+            .then(() => {
                 showToast("Meldung veröffentlicht!", "success");
-                document.getElementById('announce-title').value = '';
-                document.getElementById('announce-content').innerHTML = '';
-            }).catch(err => {
-                showToast("Fehler: " + err.message, "error");
-            }).finally(() => { btn.disabled = false; });
+                document.getElementById('announce-title').value = ''; document.getElementById('announce-content').innerHTML = '';
+            }).catch(err => showToast("Fehler: " + err.message, "error")).finally(() => { btn.disabled = false; });
         }
 
         async function deleteAnnouncement(id) {
-            const confirmed = await showConfirm({ title: 'Meldung löschen?', message: 'Diese Meldung wirklich löschen?', okLabel: 'Löschen' });
-            if (confirmed) {
-                db.ref(`announcements/${id}`).remove()
-                    .then(() => showToast("Meldung gelöscht.", "success"))
-                    .catch(err => showToast("Fehler: " + err.message, "error"));
-            }
+            const confirmed = await showConfirm({ title: 'Meldung löschen?', message: 'Wirklich löschen?', okLabel: 'Löschen' });
+            if (confirmed) { db.ref(`announcements/${id}`).remove().then(() => showToast("Gelöscht.", "success")); }
         }
 
         let cachedUsers = [];
         let userSearchDebounceTimer = null;
 
         function onUserSearchInput(value) {
-            clearTimeout(userSearchDebounceTimer);
-            userSearchDebounceTimer = setTimeout(() => renderAdminUserList(value), 250);
+            clearTimeout(userSearchDebounceTimer); userSearchDebounceTimer = setTimeout(() => renderAdminUserList(value), 250);
         }
 
         function loadAdminUserList() {
             db.ref('users').on('value', snap => {
                 cachedUsers = [];
                 snap.forEach(child => {
-                    const safeEmail = child.key;
-                    const data = (child.val() && child.val().data) || { balance: 0, spent: 0 };
+                    const safeEmail = child.key; const data = (child.val() && child.val().data) || { balance: 0, spent: 0 };
                     cachedUsers.push({ safeEmail, email: unsanitizeEmail(safeEmail), balance: data.balance || 0, spent: data.spent || 0 });
                 });
                 cachedUsers.sort((a, b) => a.email.localeCompare(b.email));
+                
+                // Autocomplete füllen
+                const datalist = document.getElementById('registered-users');
+                datalist.innerHTML = cachedUsers.map(u => `<option value="${escapeHtml(u.email)}">`).join('');
+
                 const currentSearch = document.getElementById('user-search') ? document.getElementById('user-search').value : '';
-                renderAdminUserList(currentSearch);
-                updateAdminChart(); // Chart.js updaten, sobald Daten da sind
+                renderAdminUserList(currentSearch); updateAdminChart();
             });
         }
 
@@ -1081,10 +960,7 @@
             const filtered = needle ? cachedUsers.filter(u => u.email.toLowerCase().includes(needle)) : cachedUsers;
 
             list.innerHTML = '';
-            if (filtered.length === 0) {
-                list.innerHTML = `<div class="empty-state">${cachedUsers.length === 0 ? 'Noch keine registrierten Nutzer.' : 'Keine Nutzer gefunden.'}</div>`;
-                return;
-            }
+            if (filtered.length === 0) { list.innerHTML = `<div class="empty-state">${cachedUsers.length === 0 ? 'Noch keine Nutzer.' : 'Nichts gefunden.'}</div>`; return; }
             filtered.forEach(u => {
                 const bal = u.balance.toFixed(2).replace('.', ',');
                 const balColor = u.balance < 0 ? 'var(--outflow-text)' : 'var(--inflow-text)';
@@ -1102,14 +978,12 @@
             if (cachedUsers.length === 0) return showToast("Keine Nutzer geladen.", "error");
             const confirmed = await showConfirm({
                 title: 'Zeitraum abschließen?',
-                message: `Wirklich die Guthaben von ${cachedUsers.length} Nutzer(n) archivieren und auf 0€ zurücksetzen?\nDiese Aktion kann nicht direkt rückgängig gemacht werden.`,
+                message: `Wirklich die Guthaben von ${cachedUsers.length} Nutzer(n) archivieren und auf 0€ zurücksetzen?`,
                 okLabel: 'Archivieren & Zurücksetzen'
             });
             if (!confirmed) return;
 
-            btn.disabled = true;
-            const periodId = Date.now();
-            const archive = {};
+            btn.disabled = true; const periodId = Date.now(); const archive = {};
             cachedUsers.forEach(u => { archive[u.safeEmail] = { balance: u.balance, spent: u.spent, email: u.email }; });
 
             try {
@@ -1117,57 +991,41 @@
                 const updates = {};
                 cachedUsers.forEach(u => { updates[`users/${u.safeEmail}/data/balance`] = 0; updates[`users/${u.safeEmail}/data/spent`] = 0; });
                 await db.ref().update(updates);
-                await db.ref('admin_logs').push({
-                    admin: currentUser.email, target: 'ALLE NUTZER', action: 'period_close',
-                    amount: cachedUsers.length, reason: `Zeitraum abgeschlossen (history/${periodId})`, timestamp: periodId
-                });
-                showToast("Zeitraum archiviert und alle Guthaben zurückgesetzt.", "success");
-            } catch (e) { showToast("Fehler beim Archivieren: " + e.message, "error"); }
-            finally { btn.disabled = false; }
+                await db.ref('admin_logs').push({ admin: currentUser.email, target: 'ALLE NUTZER', action: 'period_close', amount: cachedUsers.length, reason: `Zeitraum abgeschlossen (history/${periodId})`, timestamp: periodId });
+                showToast("Zeitraum archiviert.", "success");
+            } catch (e) { showToast("Fehler: " + e.message, "error"); } finally { btn.disabled = false; }
         }
 
         async function modifyUserBalance(actionType) {
             const btnMap = { add: 'btn-add-balance', sub: 'btn-sub-balance', set: 'btn-set-balance' };
             const allBtns = Object.values(btnMap).map(id => document.getElementById(id));
-            if (allBtns.some(b => b.disabled)) return; // Doppel-Klick-Sperre
+            if (allBtns.some(b => b.disabled)) return;
 
             const emailInput = document.getElementById('target-user').value.trim();
             const reasonInput = document.getElementById('target-reason').value.trim();
             const amountInput = parseFloat(document.getElementById('target-amount').value);
 
             if (!emailInput || isNaN(amountInput) || amountInput < 0) return showToast("Gültige E-Mail & Betrag eingeben!", "error");
-            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailInput)) return showToast("Das sieht nicht wie eine gültige E-Mail-Adresse aus.", "error");
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailInput)) return showToast("Ungültige E-Mail-Adresse.", "error");
 
             const safeTargetEmail = sanitizeEmail(emailInput);
             const dataRef = db.ref(`users/${safeTargetEmail}/data`);
 
-            let existingSnap;
-            try { existingSnap = await dataRef.get(); } catch (e) { return showToast("Fehler beim Prüfen des Nutzers: " + e.message, "error"); }
-            const userExists = existingSnap.exists();
-            const currentBalance = userExists ? (existingSnap.val().balance || 0) : 0;
+            let existingSnap; try { existingSnap = await dataRef.get(); } catch (e) { return showToast("Fehler beim Prüfen: " + e.message, "error"); }
+            const userExists = existingSnap.exists(); const currentBalance = userExists ? (existingSnap.val().balance || 0) : 0;
 
             if (!userExists) {
-                const create = await showConfirm({
-                    title: 'Neuen Nutzer anlegen?',
-                    message: `Für "${emailInput}" gibt es noch keinen Account.\nDiese E-Mail wurde vermutlich noch nie über Google-Login verwendet.\n\nTrotzdem einen neuen Eintrag anlegen?`,
-                    okLabel: 'Anlegen', neutral: true
-                });
+                const create = await showConfirm({ title: 'Neuen Nutzer anlegen?', message: `Account "${emailInput}" existiert nicht. Trotzdem anlegen?`, okLabel: 'Anlegen', neutral: true });
                 if (!create) return;
             }
 
             const projectedBalance = actionType === 'add' ? currentBalance + amountInput : actionType === 'sub' ? currentBalance - amountInput : amountInput;
             if (projectedBalance < 0) {
-                const proceed = await showConfirm({
-                    title: 'Negatives Guthaben?',
-                    message: `Achtung: Das Guthaben würde dadurch auf ${projectedBalance.toFixed(2).replace('.', ',')}€ (negativ) sinken.\nTrotzdem fortfahren?`,
-                    okLabel: 'Fortfahren'
-                });
+                const proceed = await showConfirm({ title: 'Negatives Guthaben?', message: `Guthaben sinkt auf ${projectedBalance.toFixed(2).replace('.', ',')}€. Fortfahren?`, okLabel: 'Fortfahren' });
                 if (!proceed) return;
             }
 
-            // Haptisches Feedback (falls unterstützt)
             if (navigator.vibrate) navigator.vibrate(150);
-
             allBtns.forEach(b => b.disabled = true);
 
             dataRef.transaction(currentData => {
@@ -1180,17 +1038,12 @@
                 allBtns.forEach(b => b.disabled = false);
                 if (error) showToast("Fehler: " + error.message, "error");
                 else if (committed) {
-                    const timestamp = Date.now();
+                    const ts = Date.now();
                     if(actionType === 'add' || actionType === 'sub') {
-                        db.ref(`users/${safeTargetEmail}/transactions`).push({
-                            amount: amountInput, type: actionType === 'add' ? 'inflow' : 'outflow',
-                            reason: reasonInput || (actionType === 'add' ? 'Aufladung' : 'Abbuchung'), timestamp: timestamp
-                        });
+                        db.ref(`users/${safeTargetEmail}/transactions`).push({ amount: amountInput, type: actionType === 'add' ? 'inflow' : 'outflow', reason: reasonInput || (actionType === 'add' ? 'Aufladung' : 'Abbuchung'), timestamp: ts });
                     }
-                    db.ref('admin_logs').push({ admin: currentUser.email, target: emailInput, action: actionType, amount: amountInput, reason: reasonInput, timestamp: timestamp });
-                    showToast("Erfolgreich!", "success");
-                    document.getElementById('target-amount').value = '';
-                    document.getElementById('target-reason').value = '';
+                    db.ref('admin_logs').push({ admin: currentUser.email, target: emailInput, action: actionType, amount: amountInput, reason: reasonInput, timestamp: ts });
+                    showToast("Erfolgreich!", "success"); document.getElementById('target-amount').value = ''; document.getElementById('target-reason').value = '';
                 }
             });
         }
@@ -1216,32 +1069,26 @@
         let isScannerRunning = false;
         function toggleScanner() {
             const container = document.getElementById('qr-reader-container');
-            const btn = document.getElementById('start-scan-btn');
             if(isScannerRunning) {
                 stopScannerIfRunning();
-                container.style.display = 'none'; btn.innerHTML = '<i class="fa-solid fa-camera"></i> Nutzer QR scannen';
+                container.style.display = 'none';
             } else {
-                container.style.display = 'block'; btn.innerHTML = '<i class="fa-solid fa-xmark"></i> Scanner beenden'; isScannerRunning = true;
+                container.style.display = 'flex';
+                isScannerRunning = true;
                 html5QrcodeScanner = new Html5Qrcode("qr-reader");
                 html5QrcodeScanner.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 250 } },
-                    (decodedText) => { document.getElementById('target-user').value = decodedText; toggleScanner(); },
+                    (decodedText) => { document.getElementById('target-user').value = decodedText; toggleScanner(); showToast("Nutzer gescannt!", "success"); },
                     (err) => { }
-                ).catch(err => { showToast("Kamerafehler: " + err, "error"); isScannerRunning = false; container.style.display = 'none'; btn.innerHTML = '<i class="fa-solid fa-camera"></i> Nutzer QR scannen'; });
+                ).catch(err => { showToast("Kamerafehler: " + err, "error"); isScannerRunning = false; container.style.display = 'none'; });
             }
         }
 
-        // Stoppt die Kamera zuverlässig, z.B. beim Verlassen des Admin-Tabs
         function stopScannerIfRunning() {
             if (isScannerRunning && html5QrcodeScanner) {
-                html5QrcodeScanner.stop().catch(() => {}).finally(() => {
-                    html5QrcodeScanner.clear && html5QrcodeScanner.clear();
-                });
+                html5QrcodeScanner.stop().catch(() => {}).finally(() => { html5QrcodeScanner.clear && html5QrcodeScanner.clear(); });
             }
             isScannerRunning = false;
-            const container = document.getElementById('qr-reader-container');
-            const btn = document.getElementById('start-scan-btn');
-            if (container) container.style.display = 'none';
-            if (btn) btn.innerHTML = '<i class="fa-solid fa-camera"></i> Nutzer QR scannen';
+            document.getElementById('qr-reader-container').style.display = 'none';
         }
 
         const pillLeft = document.getElementById('scroll-pill-left');
@@ -1250,199 +1097,106 @@
         let currentViewName = 'Start';
 
         function moveNavIndicator(activeElId) {
-            const indicator = document.getElementById('nav-indicator');
-            const activeItem = document.getElementById(activeElId);
-            const nav = document.querySelector('.bottom-nav');
+            const indicator = document.getElementById('nav-indicator'); const activeItem = document.getElementById(activeElId); const nav = document.querySelector('.bottom-nav');
             if (!indicator || !activeItem || !nav) return;
-
-            const navRect = nav.getBoundingClientRect();
-            const itemRect = activeItem.getBoundingClientRect();
+            const navRect = nav.getBoundingClientRect(); const itemRect = activeItem.getBoundingClientRect();
             const x = itemRect.left - navRect.left - 8;
-
-            indicator.style.setProperty('--nav-x', `${x}px`);
-            indicator.style.width = `${itemRect.width}px`;
-            indicator.style.transform = `translateX(${x}px)`;
-
-            indicator.classList.remove('squish');
-            void indicator.offsetWidth;
-            indicator.classList.add('squish');
+            indicator.style.setProperty('--nav-x', `${x}px`); indicator.style.width = `${itemRect.width}px`; indicator.style.transform = `translateX(${x}px)`;
         }
 
         let navSyncRaf = null;
         function syncNavIndicatorWhileAnimating(activeElId, durationMs = 480) {
-            const indicator = document.getElementById('nav-indicator');
-            const nav = document.querySelector('.bottom-nav');
-            const start = performance.now();
+            const indicator = document.getElementById('nav-indicator'); const nav = document.querySelector('.bottom-nav'); const start = performance.now();
             if (navSyncRaf) cancelAnimationFrame(navSyncRaf);
-
             function tick(now) {
                 const activeItem = document.getElementById(activeElId);
                 if (!indicator || !nav || !activeItem) return;
-                const navRect = nav.getBoundingClientRect();
-                const itemRect = activeItem.getBoundingClientRect();
-                indicator.style.width = `${itemRect.width}px`;
-                indicator.style.transform = `translateX(${itemRect.left - navRect.left - 8}px)`;
+                const navRect = nav.getBoundingClientRect(); const itemRect = activeItem.getBoundingClientRect();
+                indicator.style.width = `${itemRect.width}px`; indicator.style.transform = `translateX(${itemRect.left - navRect.left - 8}px)`;
                 if (now - start < durationMs) { navSyncRaf = requestAnimationFrame(tick); }
             }
             navSyncRaf = requestAnimationFrame(tick);
         }
 
-        window.addEventListener('resize', () => {
-            const active = document.querySelector('.nav-item.active');
-            if (active) moveNavIndicator(active.id);
-            if (adminChartInstance) adminChartInstance.resize();
-            if (adminHistoryChartInstance) adminHistoryChartInstance.resize();
-        });
+        window.addEventListener('resize', () => { const active = document.querySelector('.nav-item.active'); if (active) moveNavIndicator(active.id); if (adminChartInstance) adminChartInstance.resize(); if (adminHistoryChartInstance) adminHistoryChartInstance.resize(); });
         window.addEventListener('load', () => moveNavIndicator('nav-start'));
 
         const navIdToTab = { 'nav-start': 'start', 'nav-meldungen': 'meldungen', 'nav-einzahlungen': 'einzahlungen', 'nav-auszahlungen': 'auszahlungen' };
         let navDrag = { active: false, moved: false, startX: 0, startTranslate: 0, pointerId: null };
         let suppressNextNavClick = false;
 
-        function getNavBounds() {
-            const nav = document.getElementById('bottom-nav');
-            const indicator = document.getElementById('nav-indicator');
-            const navRect = nav.getBoundingClientRect();
-            const indicatorWidth = indicator.getBoundingClientRect().width;
-            return { min: 0, max: navRect.width - 16 - indicatorWidth, navRect, indicatorWidth };
-        }
-
-        function currentIndicatorTranslateX() {
-            const indicator = document.getElementById('nav-indicator');
-            const match = /translateX\((-?\d+(\.\d+)?)px\)/.exec(indicator.style.transform || '');
-            return match ? parseFloat(match[1]) : 0;
-        }
+        function getNavBounds() { const nav = document.getElementById('bottom-nav'); const indicator = document.getElementById('nav-indicator'); const navRect = nav.getBoundingClientRect(); const indicatorWidth = indicator.getBoundingClientRect().width; return { min: 0, max: navRect.width - 16 - indicatorWidth, navRect, indicatorWidth }; }
+        function currentIndicatorTranslateX() { const indicator = document.getElementById('nav-indicator'); const match = /translateX\((-?\d+(\.\d+)?)px\)/.exec(indicator.style.transform || ''); return match ? parseFloat(match[1]) : 0; }
 
         function initNavDrag() {
-            const nav = document.getElementById('bottom-nav');
-            const indicator = document.getElementById('nav-indicator');
-
+            const nav = document.getElementById('bottom-nav'); const indicator = document.getElementById('nav-indicator');
             nav.addEventListener('pointerdown', (e) => {
-                const item = e.target.closest('.nav-item');
-                if (!item || !item.classList.contains('active')) return;
-                navDrag.active = true; navDrag.moved = false; navDrag.startX = e.clientX;
-                navDrag.startTranslate = currentIndicatorTranslateX(); navDrag.pointerId = e.pointerId;
-                indicator.classList.add('dragging'); item.setPointerCapture(e.pointerId);
+                const item = e.target.closest('.nav-item'); if (!item || !item.classList.contains('active')) return;
+                navDrag.active = true; navDrag.moved = false; navDrag.startX = e.clientX; navDrag.startTranslate = currentIndicatorTranslateX(); navDrag.pointerId = e.pointerId;
+                item.setPointerCapture(e.pointerId);
             });
-
             nav.addEventListener('pointermove', (e) => {
                 if (!navDrag.active || e.pointerId !== navDrag.pointerId) return;
-                const dx = e.clientX - navDrag.startX;
-                if (Math.abs(dx) > 4) navDrag.moved = true;
-
-                const { min, max } = getNavBounds();
-                let x = navDrag.startTranslate + dx;
-                const RUBBER = 0.3; const MAX_OVERSCROLL = 26;
-                if (x < min) x = min - Math.min(MAX_OVERSCROLL, (min - x) * RUBBER);
-                if (x > max) x = max + Math.min(MAX_OVERSCROLL, (x - max) * RUBBER);
-
-                indicator.style.transform = `translateX(${x}px)`;
-                indicator.style.setProperty('--nav-x', `${x}px`);
+                const dx = e.clientX - navDrag.startX; if (Math.abs(dx) > 4) navDrag.moved = true;
+                const { min, max } = getNavBounds(); let x = navDrag.startTranslate + dx; const RUBBER = 0.3; const MAX_OVERSCROLL = 26;
+                if (x < min) x = min - Math.min(MAX_OVERSCROLL, (min - x) * RUBBER); if (x > max) x = max + Math.min(MAX_OVERSCROLL, (x - max) * RUBBER);
+                indicator.style.transform = `translateX(${x}px)`; indicator.style.setProperty('--nav-x', `${x}px`);
             });
-
             function endDrag(e) {
                 if (!navDrag.active || (e.pointerId !== undefined && e.pointerId !== navDrag.pointerId)) return;
-                navDrag.active = false; indicator.classList.remove('dragging');
-                if (!navDrag.moved) return;
-
-                suppressNextNavClick = true;
-                const navRect = nav.getBoundingClientRect(); const indicatorRect = indicator.getBoundingClientRect();
-                const blobCenter = indicatorRect.left - navRect.left + indicatorRect.width / 2;
-
+                navDrag.active = false; if (!navDrag.moved) return; suppressNextNavClick = true;
+                const navRect = nav.getBoundingClientRect(); const indicatorRect = indicator.getBoundingClientRect(); const blobCenter = indicatorRect.left - navRect.left + indicatorRect.width / 2;
                 let closestId = 'nav-start'; let closestDist = Infinity;
-                document.querySelectorAll('.nav-item').forEach(item => {
-                    const r = item.getBoundingClientRect();
-                    const center = r.left - navRect.left + r.width / 2;
-                    const dist = Math.abs(center - blobCenter);
-                    if (dist < closestDist) { closestDist = dist; closestId = item.id; }
-                });
+                document.querySelectorAll('.nav-item').forEach(item => { const r = item.getBoundingClientRect(); const center = r.left - navRect.left + r.width / 2; const dist = Math.abs(center - blobCenter); if (dist < closestDist) { closestDist = dist; closestId = item.id; } });
                 switchTab(navIdToTab[closestId]);
             }
             nav.addEventListener('pointerup', endDrag); nav.addEventListener('pointercancel', endDrag);
-            nav.addEventListener('click', (e) => {
-                if (suppressNextNavClick) { e.stopPropagation(); e.preventDefault(); suppressNextNavClick = false; }
-            }, true);
+            nav.addEventListener('click', (e) => { if (suppressNextNavClick) { e.stopPropagation(); e.preventDefault(); suppressNextNavClick = false; } }, true);
         }
         window.addEventListener('load', initNavDrag);
-
-        window.addEventListener('scroll', () => {
-            const isScrolled = window.scrollY > 50;
-            pillLeft.classList.toggle('visible', isScrolled);
-            pillRight.classList.toggle('visible', isScrolled);
-        });
+        window.addEventListener('scroll', () => { const isScrolled = window.scrollY > 50; pillLeft.classList.toggle('visible', isScrolled); pillRight.classList.toggle('visible', isScrolled); });
 
         function switchTab(tabName) {
-            // Kamera zuverlässig stoppen, wenn der Admin-Tab verlassen wird
-            if (currentViewName === 'Admin' && tabName !== 'admin') {
-                stopScannerIfRunning();
-            }
+            if (currentViewName === 'Admin' && tabName !== 'admin') stopScannerIfRunning();
 
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
             
-            const subTitle = document.getElementById('header-sub');
-            const mainTitle = document.getElementById('header-main');
-            const extraInfo = document.getElementById('extra-info');
-            const balanceCard = document.getElementById('main-balance-card');
+            const subTitle = document.getElementById('header-sub'); const mainTitle = document.getElementById('header-main');
+            const extraInfo = document.getElementById('extra-info'); const balanceCard = document.getElementById('main-balance-card');
 
             if(tabName === 'start') {
-                document.getElementById('view-start').classList.add('active');
-                document.getElementById('nav-start').classList.add('active');
+                document.getElementById('view-start').classList.add('active'); document.getElementById('nav-start').classList.add('active');
                 subTitle.style.display = 'block'; mainTitle.innerText = currentUser ? `Hey, ${currentUser.displayName.split(' ')[0]}!` : 'Hey!';
-                balanceCard.style.display = 'block'; extraInfo.style.display = 'none'; currentViewName = 'Start';
-            } 
-            else if(tabName === 'meldungen') {
-                document.getElementById('view-meldungen').classList.add('active');
-                document.getElementById('nav-meldungen').classList.add('active');
-                subTitle.style.display = 'none'; mainTitle.innerText = 'Meldungen';
-                balanceCard.style.display = 'none'; currentViewName = 'Meldungen';
-            }
-            else if(tabName === 'einzahlungen') {
-                document.getElementById('view-einzahlungen').classList.add('active');
-                document.getElementById('nav-einzahlungen').classList.add('active');
-                subTitle.style.display = 'none'; mainTitle.innerText = 'Einzahlungen';
-                balanceCard.style.display = 'block'; extraInfo.style.display = 'none'; currentViewName = 'Einzahlungen';
-            } 
-            else if(tabName === 'auszahlungen') {
-                document.getElementById('view-auszahlungen').classList.add('active');
-                document.getElementById('nav-auszahlungen').classList.add('active');
-                subTitle.style.display = 'none'; mainTitle.innerText = 'Auszahlungen';
-                balanceCard.style.display = 'block'; extraInfo.style.display = 'inline-block'; currentViewName = 'Auszahlungen';
-            }
-            else if(tabName === 'admin') {
-                document.getElementById('view-admin').classList.add('active');
-                subTitle.style.display = 'block'; subTitle.innerText = 'Admin Interface'; mainTitle.innerText = 'System';
+                balanceCard.style.display = 'block'; extraInfo.style.display = currentUser ? 'none' : 'inline-block'; currentViewName = 'Start';
+            } else if(tabName === 'meldungen') {
+                document.getElementById('view-meldungen').classList.add('active'); document.getElementById('nav-meldungen').classList.add('active');
+                subTitle.style.display = 'none'; mainTitle.innerText = 'Meldungen'; balanceCard.style.display = 'none'; currentViewName = 'Meldungen';
+            } else if(tabName === 'einzahlungen') {
+                document.getElementById('view-einzahlungen').classList.add('active'); document.getElementById('nav-einzahlungen').classList.add('active');
+                subTitle.style.display = 'none'; mainTitle.innerText = 'Einzahlungen'; balanceCard.style.display = 'block'; extraInfo.style.display = 'none'; currentViewName = 'Einzahlungen';
+            } else if(tabName === 'auszahlungen') {
+                document.getElementById('view-auszahlungen').classList.add('active'); document.getElementById('nav-auszahlungen').classList.add('active');
+                subTitle.style.display = 'none'; mainTitle.innerText = 'Auszahlungen'; balanceCard.style.display = 'block'; extraInfo.style.display = currentUser ? 'inline-block' : 'none'; currentViewName = 'Auszahlungen';
+            } else if(tabName === 'admin') {
+                document.getElementById('view-admin').classList.add('active'); subTitle.style.display = 'block'; subTitle.innerText = 'Admin Interface'; mainTitle.innerText = 'System';
                 balanceCard.style.display = 'none'; currentViewName = 'Admin';
             }
 
-            if(!mainNavItems.includes(tabName)) {
-                pillLeft.innerHTML = `<i class="fa-solid fa-chevron-left back-icon" onclick="switchTab('start')"></i> ${currentViewName}`;
-                pillLeft.style.pointerEvents = 'auto';
-            } else {
-                pillLeft.innerHTML = currentViewName;
-                pillLeft.style.pointerEvents = 'none';
-            }
+            if(!mainNavItems.includes(tabName)) { pillLeft.innerHTML = `<i class="fa-solid fa-chevron-left back-icon" onclick="switchTab('start')"></i> ${currentViewName}`; pillLeft.style.pointerEvents = 'auto'; } 
+            else { pillLeft.innerHTML = currentViewName; pillLeft.style.pointerEvents = 'none'; }
 
-            const indicator = document.getElementById('nav-indicator');
-            const activeNavItem = document.querySelector('.nav-item.active');
-            if (activeNavItem) {
-                indicator.style.opacity = '1'; moveNavIndicator(activeNavItem.id); syncNavIndicatorWhileAnimating(activeNavItem.id);
-            } else { indicator.style.opacity = '0'; }
-
+            const indicator = document.getElementById('nav-indicator'); const activeNavItem = document.querySelector('.nav-item.active');
+            if (activeNavItem) { indicator.style.opacity = '1'; moveNavIndicator(activeNavItem.id); syncNavIndicatorWhileAnimating(activeNavItem.id); } else { indicator.style.opacity = '0'; }
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function toggleUserQR(show) {
             const qrScreen = document.getElementById('qr-screen');
-            if (show) {
-                if(!currentUser) return showToast("Du musst eingeloggt sein, um deinen QR Code zu sehen.", "error");
-                qrScreen.classList.add('open');
-            } else {
-                qrScreen.classList.remove('open');
-            }
+            if (show) { if(!currentUser) return showToast("Bitte erst einloggen.", "error"); qrScreen.classList.add('open'); } 
+            else { qrScreen.classList.remove('open'); }
         }
 
-        // --- EASTER EGG LOGIK ---
         function triggerProfileEasterEgg() {
             if (typeof confetti !== 'undefined') {
                 const duration = 3000; const end = Date.now() + duration;
@@ -1452,56 +1206,23 @@
                     if (Date.now() < end) requestAnimationFrame(frame);
                 }());
             }
-
-            const picSrc = document.getElementById('user-profile-pic').src;
-            const numPics = 45; const pics = [];
-            const binSize = 45; const numBins = Math.max(1, Math.floor(window.innerWidth / binSize));
-            const bins = new Array(numBins).fill(0); 
-
+            const picSrc = document.getElementById('user-profile-pic').src; const numPics = 45; const pics = []; const binSize = 45; const numBins = Math.max(1, Math.floor(window.innerWidth / binSize)); const bins = new Array(numBins).fill(0); 
             for (let i = 0; i < numPics; i++) {
                 setTimeout(() => {
                     const img = document.createElement('img'); img.src = picSrc; img.className = 'falling-profile';
-                    const size = Math.floor(Math.random() * 35) + 30;
-                    img.style.width = size + 'px'; img.style.height = size + 'px';
-                    
-                    const binIndex = Math.floor(Math.random() * numBins);
-                    const randomX = (binIndex * binSize) + (Math.random() * (binSize - size/2));
-                    img.style.left = randomX + 'px';
-                    
-                    const initialRotation = Math.random() * 360;
-                    img.style.transform = `translateY(-200px) rotate(${initialRotation}deg)`;
+                    const size = Math.floor(Math.random() * 35) + 30; img.style.width = size + 'px'; img.style.height = size + 'px';
+                    const binIndex = Math.floor(Math.random() * numBins); const randomX = (binIndex * binSize) + (Math.random() * (binSize - size/2)); img.style.left = randomX + 'px';
+                    const initialRotation = Math.random() * 360; img.style.transform = `translateY(-200px) rotate(${initialRotation}deg)`;
                     document.body.appendChild(img);
-                    
-                    const bottomOffset = bins[binIndex];
-                    const targetY = window.innerHeight - bottomOffset - size;
-                    bins[binIndex] += (size * 0.6); 
-                    
-                    void img.offsetWidth;
-                    const endRotation = initialRotation + Math.random() * 360;
-                    img.style.transform = `translateY(${targetY}px) rotate(${endRotation}deg)`;
-                    pics.push(img);
+                    const targetY = window.innerHeight - bins[binIndex] - size; bins[binIndex] += (size * 0.6); 
+                    void img.offsetWidth; const endRotation = initialRotation + Math.random() * 360; img.style.transform = `translateY(${targetY}px) rotate(${endRotation}deg)`; pics.push(img);
                 }, i * 60); 
             }
-
-            setTimeout(() => {
-                pics.forEach((img, index) => {
-                    setTimeout(() => {
-                        img.classList.add('drop-off'); 
-                        const currentRotation = img.style.transform.split('rotate(')[1];
-                        img.style.transform = `translateY(${window.innerHeight + 200}px) rotate(${currentRotation}`; 
-                        setTimeout(() => img.remove(), 1000);
-                    }, index * 40); 
-                });
-            }, 5500); 
+            setTimeout(() => { pics.forEach((img, index) => { setTimeout(() => { img.classList.add('drop-off'); img.style.transform = `translateY(${window.innerHeight + 200}px) rotate(${img.style.transform.split('rotate(')[1]}`; setTimeout(() => img.remove(), 1000); }, index * 40); }); }, 5500); 
         }
 
-        // PWA Service Worker Registration
         if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js')
-                    .then(reg => console.log('Service Worker registriert'))
-                    .catch(err => console.log('Service Worker Fehler (sw.js evtl. nicht vorhanden) -', err));
-            });
+            window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(err => {}); });
         }
     </script>
 </body>
