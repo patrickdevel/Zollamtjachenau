@@ -165,14 +165,6 @@
         .stat-card-label { font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
         .stat-card-value { font-size: 1.35rem; font-weight: 850; color: var(--text-main); letter-spacing: -0.5px; }
 
-        /* Kiosk / Selbstbedienung */
-        .kiosk-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 8px; }
-        .kiosk-item { background: var(--item-bg); border: 1px solid var(--border-color); border-radius: 18px; padding: 12px 8px; text-align: center; cursor: pointer; box-shadow: var(--shadow); transition: transform 0.15s, border-color 0.15s; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; position: relative; }
-        .kiosk-item:active { transform: scale(0.95); border-color: #3b82f6; }
-        .kiosk-emoji { font-size: 1.6rem; }
-        .kiosk-name { font-size: 0.75rem; font-weight: 700; color: var(--text-main); }
-        .kiosk-price { font-size: 0.75rem; font-weight: 800; color: #3b82f6; background: rgba(59, 130, 246, 0.1); padding: 2px 6px; border-radius: 10px; }
-
         /* Skeletons */
         @keyframes shimmer { 0% { background-position: -400px 0; } 100% { background-position: 400px 0; } }
         .skeleton { background: var(--skeleton-bg1); background-image: linear-gradient(to right, var(--skeleton-bg1) 0%, var(--skeleton-bg2) 20%, var(--skeleton-bg1) 40%, var(--skeleton-bg1) 100%); background-repeat: no-repeat; background-size: 800px 100%; animation: shimmer 1.5s infinite linear forwards; border-radius: 20px; border: 1px solid var(--border-color); }
@@ -424,42 +416,6 @@
                     <div class="stat-card">
                         <span class="stat-card-label">Transaktionen</span>
                         <span class="stat-card-value" id="stat-trans-count">0</span>
-                    </div>
-                </div>
-            </div>
-
-            <div id="user-kiosk-section" style="display: none;">
-                <p class="section-label">Schnell-Kiosk (Selbstbedienung)</p>
-                <div class="kiosk-grid">
-                    <div class="kiosk-item" onclick="quickBuy('Kaffee', 0.50, '☕')">
-                        <span class="kiosk-emoji">☕</span>
-                        <span class="kiosk-name">Kaffee</span>
-                        <span class="kiosk-price">0,50 €</span>
-                    </div>
-                    <div class="kiosk-item" onclick="quickBuy('Spezi', 1.20, '🥤')">
-                        <span class="kiosk-emoji">🥤</span>
-                        <span class="kiosk-name">Spezi</span>
-                        <span class="kiosk-price">1,20 €</span>
-                    </div>
-                    <div class="kiosk-item" onclick="quickBuy('Wasser', 0.80, '💧')">
-                        <span class="kiosk-emoji">💧</span>
-                        <span class="kiosk-name">Wasser</span>
-                        <span class="kiosk-price">0,80 €</span>
-                    </div>
-                    <div class="kiosk-item" onclick="quickBuy('Bier/Radler', 1.50, '🍺')">
-                        <span class="kiosk-emoji">🍺</span>
-                        <span class="kiosk-name">Bier/Radler</span>
-                        <span class="kiosk-price">1,50 €</span>
-                    </div>
-                    <div class="kiosk-item" onclick="quickBuy('Snack', 1.00, '🍫')">
-                        <span class="kiosk-emoji">🍫</span>
-                        <span class="kiosk-name">Snack</span>
-                        <span class="kiosk-price">1,00 €</span>
-                    </div>
-                    <div class="kiosk-item" onclick="quickBuy('Schorle', 1.10, '🍎')">
-                        <span class="kiosk-emoji">🍎</span>
-                        <span class="kiosk-name">Schorle</span>
-                        <span class="kiosk-price">1,10 €</span>
                     </div>
                 </div>
             </div>
@@ -716,59 +672,6 @@
         let adminChartInstance = null;
         let adminHistoryChartInstance = null;
 
-        // Kiosk Selbstbedienung - Schneller Einkauf
-        async function quickBuy(itemName, price, emoji) {
-            if (!currentUser) {
-                showToast("Bitte logge dich ein, um den Kiosk zu nutzen.", "error");
-                return;
-            }
-
-            const confirmed = await showConfirm({
-                title: `${emoji} ${itemName} kaufen?`,
-                message: `Möchtest du dir ${itemName} für ${price.toFixed(2).replace('.', ',')}€ buchen?`,
-                okLabel: 'Kaufen',
-                neutral: false
-            });
-
-            if(!confirmed) return;
-
-            const safeEmail = sanitizeEmail(currentUser.email);
-            const userRef = db.ref(`users/${safeEmail}/data`);
-            
-            userRef.transaction((currentData) => {
-                let data = currentData || { balance: 0, spent: 0 };
-                data.balance = (data.balance || 0) - price;
-                data.spent = (data.spent || 0) + price;
-                return data;
-            }, (error, committed) => {
-                if (error) {
-                    showToast("Fehler beim Kauf: " + error.message, "error");
-                } else if (committed) {
-                    const ts = Date.now();
-                    db.ref(`users/${safeEmail}/transactions`).push({
-                        amount: price,
-                        type: 'outflow',
-                        reason: `Kiosk: ${itemName} ${emoji}`,
-                        timestamp: ts
-                    });
-
-                    db.ref('admin_logs').push({
-                        admin: 'Selbstbedienung',
-                        target: currentUser.email,
-                        action: 'sub',
-                        amount: price,
-                        reason: `Kiosk-Kauf: ${itemName}`,
-                        timestamp: ts
-                    });
-
-                    if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
-                    confetti({ particleCount: 60, spread: 60, origin: { y: 0.8 }, colors: ['#ff9233', '#7028ff', '#16a34a', '#3b82f6'] });
-                    
-                    showToast(`${itemName} erfolgreich gebucht! Guten Appetit! 😋`, "success");
-                }
-            });
-        }
-
         function updateAdminChart() {
             if (cachedUsers.length === 0) return;
             let totalBalance = 0; let totalSpent = 0;
@@ -841,7 +744,6 @@
             const extraEl = document.getElementById('extra-info');
             const trendEl = document.getElementById('balance-trend');
             const statsSection = document.getElementById('user-quick-stats');
-            const kioskSection = document.getElementById('user-kiosk-section');
             const activitySection = document.getElementById('recent-activity-section');
             
             if(user) {
@@ -866,7 +768,6 @@
                 
                 extraEl.innerText = "Lade Guthaben...";
                 statsSection.style.display = 'block';
-                kioskSection.style.display = 'block';
                 activitySection.style.display = 'block';
                 
                 startRealtimeListeners(user);
@@ -885,7 +786,6 @@
                 extraEl.innerText = 'Bitte logge dich ein, um dein Guthaben zu sehen.';
                 
                 statsSection.style.display = 'none';
-                kioskSection.style.display = 'none';
                 activitySection.style.display = 'none';
                 
                 document.getElementById('inflow-list').innerHTML = '<div class="empty-state"><i class="fa-solid fa-lock" style="margin-bottom:8px;font-size:1.5rem;display:block;"></i>Bitte logge dich ein.</div>';
@@ -1402,4 +1302,5 @@
     </script>
 </body>
 </html>
+
 
