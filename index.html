@@ -223,13 +223,33 @@
         .nav-item:active i { transform: scale(0.85); }
         .nav-item.active:active { cursor: grabbing; }
 
-        /* QR-Code Modal */
-        .qr-modal { position: fixed; top: 0; left: 50%; transform: translateX(-50%) translateY(100%); width: 100%; max-width: 430px; height: 100%; background: #f1f5f9; z-index: 200; transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); display: flex; flex-direction: column; align-items: center; padding: 40px 24px 140px 24px; }
-        .qr-modal.open { transform: translateX(-50%) translateY(0); }
+        /* QR-Code Modal & Keyboard PIN Modal */
+        .qr-modal, .pin-modal { position: fixed; top: 0; left: 50%; transform: translateX(-50%) translateY(100%); width: 100%; max-width: 430px; height: 100%; background: #f1f5f9; z-index: 200; transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); display: flex; flex-direction: column; align-items: center; padding: 40px 24px 140px 24px; }
+        .qr-modal.open, .pin-modal.open { transform: translateX(-50%) translateY(0); }
+        
         .qr-modal h2 { font-size: 2rem; font-weight: 900; margin-top: 20px; margin-bottom: 40px; text-transform: uppercase;}
         .qr-card { background: white; padding: 24px; border-radius: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.06); }
         .qr-card img { width: 100%; max-width: 260px; display: block; }
         .close-btn { width: 100%; padding: 20px; background: linear-gradient(135deg, #ff4141 0%, #ff7343 100%); color: white; border: none; border-radius: 24px; font-size: 1.2rem; font-weight: 900; text-transform: uppercase; cursor: pointer; margin-top: auto;}
+
+        /* Custom Keypad / PIN Code Styling */
+        .pin-display { display: flex; gap: 16px; margin-top: 20px; margin-bottom: 40px; }
+        .pin-dot { width: 18px; height: 18px; border-radius: 50%; border: 3px solid #cbd5e1; background: transparent; transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        .pin-dot.filled { background: #0f172a; border-color: #0f172a; transform: scale(1.15); }
+        .pin-dot.error { border-color: #ef4444; background: #ef4444; }
+        .pin-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; width: 100%; max-width: 320px; margin-top: auto; margin-bottom: auto; }
+        .pin-btn { background: white; border: 1px solid rgba(0, 0, 0, 0.04); color: var(--text-main); font-size: 1.8rem; font-weight: 800; width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.03); transition: transform 0.1s ease, background-color 0.1s; }
+        .pin-btn:active { transform: scale(0.9); background-color: #f1f5f9; }
+        .pin-btn.action-clear { background: #fee2e2; color: #ef4444; font-size: 1.3rem; }
+        .pin-btn.action-close { background: #e2e8f0; color: #64748b; font-size: 1.3rem; }
+        
+        /* Vibration Animation für falschen PIN */
+        @keyframes shake {
+            0%, 100% { transform: translateX(-50%) translateX(0); }
+            20%, 60% { transform: translateX(-50%) translateX(-10px); }
+            40%, 80% { transform: translateX(-50%) translateX(10px); }
+        }
+        .pin-modal.shake-shake { animation: shake 0.35s ease-in-out; }
     </style>
 </head>
 <body>
@@ -388,6 +408,34 @@
             <button class="close-btn" onclick="toggleUserQR(false)">Schließen</button>
         </div>
 
+        <!-- NEU: Keyboard / PIN Screen Modal -->
+        <div id="pin-screen" class="pin-modal">
+            <h2 style="font-size: 1.8rem; font-weight: 900; letter-spacing: -0.5px; text-transform: uppercase;">Admin Login</h2>
+            <p style="color: var(--text-muted); font-size: 0.95rem; font-weight: 500; margin-top: 6px;">Gib den vierstelligen System-PIN ein</p>
+            
+            <div class="pin-display">
+                <div class="pin-dot" id="pin-dot-0"></div>
+                <div class="pin-dot" id="pin-dot-1"></div>
+                <div class="pin-dot" id="pin-dot-2"></div>
+                <div class="pin-dot" id="pin-dot-3"></div>
+            </div>
+
+            <div class="pin-grid">
+                <div class="pin-btn" onclick="pressPinButton(1)">1</div>
+                <div class="pin-btn" onclick="pressPinButton(2)">2</div>
+                <div class="pin-btn" onclick="pressPinButton(3)">3</div>
+                <div class="pin-btn" onclick="pressPinButton(4)">4</div>
+                <div class="pin-btn" onclick="pressPinButton(5)">5</div>
+                <div class="pin-btn" onclick="pressPinButton(6)">6</div>
+                <div class="pin-btn" onclick="pressPinButton(7)">7</div>
+                <div class="pin-btn" onclick="pressPinButton(8)">8</div>
+                <div class="pin-btn" onclick="pressPinButton(9)">9</div>
+                <div class="pin-btn action-clear" onclick="clearPinInput()"><i class="fa-solid fa-delete-left"></i></div>
+                <div class="pin-btn" onclick="pressPinButton(0)">0</div>
+                <div class="pin-btn action-close" onclick="togglePinScreen(false)"><i class="fa-solid fa-xmark"></i></div>
+            </div>
+        </div>
+
         <!-- Bottom Navbar (Jetzt 4 Items) -->
         <nav class="bottom-nav" id="bottom-nav">
             <div class="nav-indicator" id="nav-indicator"></div>
@@ -425,9 +473,9 @@
         let currentUser = null;
         let isAdmin = false;
         let cachedUserTransactions = []; // für den CSV-Export der eigenen Historie
+        let currentPinBuffer = ""; // Puffer für das In-App PIN-Keyboard
 
         // Exportiert die eigene Transaktionshistorie als CSV-Datei zum Download.
-        // filterType: 'all' | 'inflow' | 'outflow'
         function exportTransactionsCSV(filterType) {
             if (!currentUser) return alert("Zuerst anmelden!");
             const rows = cachedUserTransactions.filter(t => filterType === 'all' || t.type === filterType);
@@ -484,9 +532,6 @@
         function sanitizeEmail(email) { return email.replace(/\./g, ','); }
         function unsanitizeEmail(email) { return email.replace(/,/g, '.'); }
 
-        // Whitelist-Sanitizer für die Meldungen: nur einfache Textformatierung erlaubt (b/i/u/s/br),
-        // alles andere (script, img, Attribute wie onclick, style, etc.) wird entfernt. Schützt vor XSS,
-        // da der Editor-Inhalt sonst 1:1 per innerHTML für alle Nutzer gerendert wird.
         function escapeHtml(str) {
             const div = document.createElement('div');
             div.textContent = str == null ? '' : String(str);
@@ -502,12 +547,10 @@
                 [...node.childNodes].forEach(child => {
                     if (child.nodeType === Node.ELEMENT_NODE) {
                         if (!allowedTags.has(child.tagName)) {
-                            // Unerlaubtes Tag: durch seinen reinen Text ersetzen statt komplett zu löschen
                             const text = document.createTextNode(child.textContent);
                             child.replaceWith(text);
                             return;
                         }
-                        // Alle Attribute entfernen (onclick, style, src, href, ...)
                         [...child.attributes].forEach(attr => child.removeAttribute(attr.name));
                         clean(child);
                     }
@@ -516,6 +559,7 @@
             clean(template.content);
             return template.innerHTML;
         }
+        
         function formatDate(timestamp) {
             const date = new Date(timestamp);
             return `${date.getDate()}.${date.getMonth()+1}.${date.getFullYear()} ${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
@@ -525,14 +569,12 @@
         function startRealtimeListeners(user) {
             const safeEmail = sanitizeEmail(user.email);
             
-            // User Data
             db.ref(`users/${safeEmail}/data`).on('value', snap => {
                 const data = snap.val() || { balance: 0, spent: 0 };
                 document.getElementById('user-balance').innerText = (data.balance || 0).toFixed(2).replace('.', ',') + "€";
                 document.getElementById('extra-info').innerText = "Gesamt ausgegeben: " + (data.spent || 0).toFixed(2).replace('.', ',') + "€";
             });
 
-            // Transactions
             db.ref(`users/${safeEmail}/transactions`).orderByChild('timestamp').on('value', snap => {
                 const inflowList = document.getElementById('inflow-list');
                 const outflowList = document.getElementById('outflow-list');
@@ -542,7 +584,7 @@
                 const transactions = [];
                 snap.forEach(child => { transactions.push(child.val()); });
                 transactions.reverse();
-                cachedUserTransactions = transactions; // für CSV-Export zwischenspeichern
+                cachedUserTransactions = transactions;
 
                 transactions.forEach(t => {
                     const isPlus = t.type === 'inflow';
@@ -566,7 +608,6 @@
             });
         }
 
-        // Global Announcements Listener (Liest für jeden, auch ohne Login)
         db.ref('announcements').orderByChild('timestamp').on('value', snap => {
             const previewList = document.getElementById('announcements-preview');
             const fullList = document.getElementById('announcements-full-list');
@@ -583,7 +624,6 @@
             }
 
             announcements.forEach((a, index) => {
-                // Delete Button nur sichtbar wenn isAdmin (wird über CSS Klasse `.is-admin` gesteuert)
                 const deleteBtnHtml = `<button class="announcement-delete-btn" onclick="deleteAnnouncement('${a.id}')" title="Meldung löschen"><i class="fa-solid fa-trash"></i></button>`;
                 
                 const html = `
@@ -597,23 +637,76 @@
                     </div>`;
                 
                 fullList.innerHTML += html;
-                if(index < 3) previewList.innerHTML += html; // Max 3 in preview
+                if(index < 3) previewList.innerHTML += html;
             });
         });
 
-        // --- Admin Funktionen ---
+        // --- Custom PIN Keyboard Logic (Ersetzt die alte requestAdminAccess prompt) ---
         function requestAdminAccess() {
             if (!currentUser) return alert("Zuerst anmelden!");
             if (!isAdmin) return alert("Zugriff verweigert.");
             
-            const code = prompt("Admin-PIN:");
-            if (code === "2014") {
-                switchTab('admin');
-                loadAdminLogs();
-                loadAdminUserList();
-            } else alert("Falscher Code.");
+            togglePinScreen(true);
         }
 
+        function togglePinScreen(show) {
+            const pinScreen = document.getElementById('pin-screen');
+            clearPinInput();
+            if (show) {
+                pinScreen.classList.add('open');
+            } else {
+                pinScreen.classList.remove('open');
+            }
+        }
+
+        function pressPinButton(num) {
+            if (currentPinBuffer.length < 4) {
+                currentPinBuffer += num;
+                updatePinDotsUI();
+
+                if (currentPinBuffer.length === 4) {
+                    // Prüfen sobald 4 Ziffern getippt wurden
+                    setTimeout(() => {
+                        if (currentPinBuffer === "2014") {
+                            togglePinScreen(false);
+                            switchTab('admin');
+                            loadAdminLogs();
+                            loadAdminUserList();
+                        } else {
+                            // Fehlerzustand: UI schütteln & Punkte rot färben
+                            const pinModal = document.getElementById('pin-screen');
+                            pinModal.classList.add('shake-shake');
+                            
+                            for(let i=0; i<4; i++) {
+                                document.getElementById(`pin-dot-${i}`).classList.add('error');
+                            }
+                            
+                            setTimeout(() => {
+                                pinModal.classList.remove('shake-shake');
+                                clearPinInput();
+                            }, 500);
+                        }
+                    }, 200);
+                }
+            }
+        }
+
+        function clearPinInput() {
+            currentPinBuffer = "";
+            updatePinDotsUI();
+        }
+
+        function updatePinDotsUI() {
+            for (let i = 0; i < 4; i++) {
+                const dot = document.getElementById(`pin-dot-${i}`);
+                dot.className = "pin-dot"; // reset error / filled
+                if (i < currentPinBuffer.length) {
+                    dot.classList.add('filled');
+                }
+            }
+        }
+
+        // --- Admin System-Funktionen ---
         function publishAnnouncement() {
             const title = document.getElementById('announce-title').value.trim();
             const rawContent = document.getElementById('announce-content').innerHTML.trim();
@@ -639,7 +732,7 @@
             }
         }
 
-        let cachedUsers = []; // { safeEmail, email, balance, spent } — gecacht, damit die Suche ohne neue DB-Anfrage filtern kann
+        let cachedUsers = [];
 
         function loadAdminUserList() {
             db.ref('users').on('value', snap => {
@@ -682,8 +775,6 @@
             });
         }
 
-        // Archiviert alle aktuellen Guthaben/Ausgaben unter history/{timestamp}/ und setzt danach
-        // balance & spent aller Nutzer auf 0 zurück. Praktisch z.B. am Ende eines Zeltlagers.
         async function closeOutPeriod() {
             if (cachedUsers.length === 0) return alert("Keine Nutzer geladen.");
             const confirmed = confirm(`Wirklich die Guthaben von ${cachedUsers.length} Nutzer(n) archivieren und auf 0€ zurücksetzen?\nDiese Aktion kann nicht direkt rückgängig gemacht werden.`);
@@ -731,8 +822,6 @@
             const safeTargetEmail = sanitizeEmail(emailInput);
             const dataRef = db.ref(`users/${safeTargetEmail}/data`);
 
-            // 1) Existiert der Nutzer überhaupt? Tippfehler sollen nicht stillschweigend
-            // einen neuen, leeren Account anlegen.
             let existingSnap;
             try {
                 existingSnap = await dataRef.get();
@@ -747,10 +836,9 @@
                 if (!create) return;
             }
 
-            // 2) Würde die Aktion das Guthaben ins Minus schicken? Dann noch einmal nachfragen.
             const projectedBalance = actionType === 'add' ? currentBalance + amountInput
                 : actionType === 'sub' ? currentBalance - amountInput
-                : amountInput; // 'set'
+                : amountInput;
             if (projectedBalance < 0) {
                 const proceed = confirm(`Achtung: Das Guthaben würde dadurch auf ${projectedBalance.toFixed(2).replace('.', ',')}€ (negativ) sinken.\nTrotzdem fortfahren?`);
                 if (!proceed) return;
@@ -827,8 +915,6 @@
         const mainNavItems = ['start', 'meldungen', 'einzahlungen', 'auszahlungen'];
         let currentViewName = 'Start';
 
-        // --- Liquid Glass Nav Indicator ---
-        // Slides + "squishes" the glass blob to the active tab, like a droplet settling into place.
         function moveNavIndicator(activeElId) {
             const indicator = document.getElementById('nav-indicator');
             const activeItem = document.getElementById(activeElId);
@@ -837,22 +923,18 @@
 
             const navRect = nav.getBoundingClientRect();
             const itemRect = activeItem.getBoundingClientRect();
-            const x = itemRect.left - navRect.left - 8; // account for nav padding
+            const x = itemRect.left - navRect.left - 8;
             const width = itemRect.width;
 
             indicator.style.setProperty('--nav-x', `${x}px`);
             indicator.style.width = `${width}px`;
             indicator.style.transform = `translateX(${x}px)`;
 
-            // Retrigger the squish animation on every move
             indicator.classList.remove('squish');
-            void indicator.offsetWidth; // force reflow so the animation restarts
+            void indicator.offsetWidth;
             indicator.classList.add('squish');
         }
 
-        // The active tab widens sideways over ~450ms (flex-grow transition) to reveal its label.
-        // This loop keeps the glass blob glued to that changing width instead of jumping straight
-        // to the final size, so the "opening" feels like one continuous liquid motion.
         let navSyncRaf = null;
         function syncNavIndicatorWhileAnimating(activeElId, durationMs = 480) {
             const indicator = document.getElementById('nav-indicator');
@@ -881,8 +963,6 @@
         window.addEventListener('load', () => moveNavIndicator('nav-start'));
 
         // --- Draggable liquid glass blob with rubber-band physics ---
-        // You can grab the active tab's glass pill and drag it along the bar; if you push it past
-        // the first/last tab it stretches with resistance, then bounces back into place on release.
         const navIdToTab = { 'nav-start': 'start', 'nav-meldungen': 'meldungen', 'nav-einzahlungen': 'einzahlungen', 'nav-auszahlungen': 'auszahlungen' };
         let navDrag = { active: false, moved: false, startX: 0, startTranslate: 0, pointerId: null };
         let suppressNextNavClick = false;
@@ -907,7 +987,7 @@
 
             nav.addEventListener('pointerdown', (e) => {
                 const item = e.target.closest('.nav-item');
-                if (!item || !item.classList.contains('active')) return; // only the active pill is grabbable
+                if (!item || !item.classList.contains('active')) return;
                 navDrag.active = true;
                 navDrag.moved = false;
                 navDrag.startX = e.clientX;
@@ -925,7 +1005,6 @@
                 const { min, max } = getNavBounds();
                 let x = navDrag.startTranslate + dx;
 
-                // Rubber-band resistance beyond the bar's edges
                 const RUBBER = 0.3;
                 const MAX_OVERSCROLL = 26;
                 if (x < min) x = min - Math.min(MAX_OVERSCROLL, (min - x) * RUBBER);
@@ -940,11 +1019,10 @@
                 navDrag.active = false;
                 indicator.classList.remove('dragging');
 
-                if (!navDrag.moved) return; // was just a tap, let the normal click handle it
+                if (!navDrag.moved) return;
 
                 suppressNextNavClick = true;
 
-                // Find the nav-item whose center is closest to the blob's current center
                 const navRect = nav.getBoundingClientRect();
                 const indicatorRect = indicator.getBoundingClientRect();
                 const blobCenter = indicatorRect.left - navRect.left + indicatorRect.width / 2;
@@ -958,14 +1036,11 @@
                     if (dist < closestDist) { closestDist = dist; closestId = item.id; }
                 });
 
-                // Bounce it home to the chosen tab with the springy easing — this is what makes it
-                // feel like it "bounces back" whenever you'd dragged it toward/past an edge.
                 switchTab(navIdToTab[closestId]);
             }
             nav.addEventListener('pointerup', endDrag);
             nav.addEventListener('pointercancel', endDrag);
 
-            // Block the synthetic click that follows a drag so it doesn't re-fire on the origin tab
             nav.addEventListener('click', (e) => {
                 if (suppressNextNavClick) {
                     e.stopPropagation();
@@ -991,7 +1066,6 @@
             const extraInfo = document.getElementById('extra-info');
             const balanceCard = document.getElementById('main-balance-card');
 
-            // Set content based on tab
             if(tabName === 'start') {
                 document.getElementById('view-start').classList.add('active');
                 document.getElementById('nav-start').classList.add('active');
@@ -1022,16 +1096,14 @@
                 balanceCard.style.display = 'none'; currentViewName = 'Admin';
             }
 
-            // Pill Left Update with Back Icon logic
             if(!mainNavItems.includes(tabName)) {
                 pillLeft.innerHTML = `<i class="fa-solid fa-chevron-left back-icon" onclick="switchTab('start')"></i> ${currentViewName}`;
-                pillLeft.style.pointerEvents = 'auto'; // Klickbar machen wegen Button
+                pillLeft.style.pointerEvents = 'auto';
             } else {
                 pillLeft.innerHTML = currentViewName;
                 pillLeft.style.pointerEvents = 'none';
             }
 
-            // Move (or hide) the liquid glass indicator behind the active tab
             const indicator = document.getElementById('nav-indicator');
             const activeNavItem = document.querySelector('.nav-item.active');
             if (activeNavItem) {
@@ -1039,7 +1111,6 @@
                 moveNavIndicator(activeNavItem.id);
                 syncNavIndicatorWhileAnimating(activeNavItem.id);
             } else {
-                // No matching nav item (e.g. Admin view) — fade the blob out
                 indicator.style.opacity = '0';
             }
 
