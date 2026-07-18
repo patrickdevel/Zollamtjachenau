@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -8,7 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Richtig für GitHub Pages -->
+    <!-- PWA & Icons -->
     <link rel="icon" type="image/png" href="favicon.png">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0f172a">
@@ -25,73 +26,116 @@
     <!-- Konfetti Lib -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
+    <!-- Chart.js Lib -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <style>
+        /* CSS Variablen für einfaches Theme-Switching */
         :root {
+            /* Light Theme Standardwerte */
             --bg-color: #f8fafc;
             --text-main: #0f172a;
             --text-muted: #64748b;
-            --gradient-btn-1: linear-gradient(135deg, #ff9233 0%, #ff5e62 100%);
-            --gradient-btn-2: linear-gradient(135deg, #7028ff 0%, #ff4b91 100%);
+            --item-bg: #ffffff;
+            --border-color: #f1f5f9;
+            --input-border: #cbd5e1;
+            --modal-bg: #f1f5f9;
             --card-bg: rgba(255, 255, 255, 0.75);
             --shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+            
+            /* Buttons & Gradients */
+            --gradient-btn-1: linear-gradient(135deg, #ff9233 0%, #ff5e62 100%);
+            --gradient-btn-2: linear-gradient(135deg, #7028ff 0%, #ff4b91 100%);
+            
+            /* Glassmorphism Navigation */
+            --nav-glass-bg: linear-gradient(120deg, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0.08) 45%, rgba(255,255,255,0.35) 100%), rgba(255, 255, 255, 0.55);
+            --nav-glass-border: rgba(255, 255, 255, 0.65);
+            --nav-indicator-bg: rgba(255, 255, 255, 0.85);
+            --nav-indicator-shadow: 0 6px 14px rgba(15, 23, 42, 0.12), inset 0 1px 2px rgba(255,255,255,1), inset 0 -2px 4px rgba(15,23,42,0.04);
+            
+            --pin-btn-bg: #ffffff;
+            --empty-state-bg: rgba(255,255,255,0.5);
+            
+            /* Spezifische Highlight-Farben */
+            --inflow-bg: #dcfce7;
+            --inflow-text: #16a34a;
+            --outflow-bg: #fee2e2;
+            --outflow-text: #dc2626;
+        }
+
+        /* Dark Theme Variablen */
+        body.dark-theme {
+            --bg-color: #0f172a;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --item-bg: #1e293b;
+            --border-color: #334155;
+            --input-border: #475569;
+            --modal-bg: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.75);
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            
+            --nav-glass-bg: linear-gradient(120deg, rgba(30,41,59,0.5) 0%, rgba(30,41,59,0.1) 45%, rgba(30,41,59,0.5) 100%), rgba(15, 23, 42, 0.75);
+            --nav-glass-border: rgba(255, 255, 255, 0.1);
+            --nav-indicator-bg: rgba(51, 65, 85, 0.85);
+            --nav-indicator-shadow: 0 6px 14px rgba(0, 0, 0, 0.3), inset 0 1px 2px rgba(255,255,255,0.1), inset 0 -2px 4px rgba(0,0,0,0.5);
+            
+            --pin-btn-bg: #1e293b;
+            --empty-state-bg: rgba(30, 41, 59, 0.5);
+            
+            --inflow-bg: rgba(22, 163, 74, 0.2);
+            --inflow-text: #4ade80;
+            --outflow-bg: rgba(220, 38, 38, 0.2);
+            --outflow-text: #f87171;
         }
 
         * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Inter', sans-serif;
-            -webkit-tap-highlight-color: transparent;
+            margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent;
         }
 
-        body { background-color: var(--bg-color); color: var(--text-main); display: flex; justify-content: center; min-height: 100vh; overflow-x: hidden; }
+        body { background-color: var(--bg-color); color: var(--text-main); display: flex; justify-content: center; min-height: 100vh; overflow-x: hidden; transition: background-color 0.3s ease, color 0.3s ease; }
 
-        .app-container { width: 100%; max-width: 430px; background: #ffffff; min-height: 100vh; display: flex; flex-direction: column; position: relative; box-shadow: 0 0 40px rgba(0,0,0,0.05); overflow-x: hidden; padding-bottom: 120px; }
+        /* Der Hintergrund für den App-Container erbt ebenfalls die Farben */
+        .app-container { width: 100%; max-width: 430px; background: transparent; min-height: 100vh; display: flex; flex-direction: column; position: relative; overflow-x: hidden; padding-bottom: 120px; transition: background-color 0.3s ease; }
+
+        /* Theme Toggle Button */
+        .theme-toggle-btn {
+            background: var(--item-bg); color: var(--text-main); border: 1px solid var(--border-color); border-radius: 50%; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; cursor: pointer; transition: transform 0.2s, background 0.3s; box-shadow: var(--shadow);
+        }
+        .theme-toggle-btn:active { transform: scale(0.9); }
 
         /* Scroll Pills */
         .scroll-pill {
             position: fixed; top: 20px; z-index: 150;
-            background:
-                linear-gradient(120deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.1) 45%, rgba(255,255,255,0.4) 100%),
-                rgba(255, 255, 255, 0.6);
-            background-size: 250% 250%, 100% 100%;
-            background-position: 0% 50%, 0 0;
-            backdrop-filter: blur(18px) saturate(190%);
-            -webkit-backdrop-filter: blur(18px) saturate(190%);
-            border: 1px solid rgba(255, 255, 255, 0.65);
-            border-radius: 50px;
-            color: var(--text-main);
-            opacity: 0; visibility: hidden;
-            transform: scale(0.85);
+            background: var(--nav-glass-bg);
+            background-size: 250% 250%, 100% 100%; background-position: 0% 50%, 0 0;
+            backdrop-filter: blur(18px) saturate(190%); -webkit-backdrop-filter: blur(18px) saturate(190%);
+            border: 1px solid var(--nav-glass-border); border-radius: 50px; color: var(--text-main);
+            opacity: 0; visibility: hidden; transform: scale(0.85);
             transition: opacity 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), visibility 0.35s, transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-            box-shadow:
-                0 10px 24px rgba(15, 23, 42, 0.12),
-                inset 0 1px 1px rgba(255,255,255,0.9),
-                inset 0 -4px 10px rgba(255,255,255,0.25);
-            display: flex; align-items: center; justify-content: center;
-            animation: navSheen 9s ease-in-out infinite;
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12), inset 0 1px 1px rgba(255,255,255,0.2), inset 0 -4px 10px rgba(0,0,0,0.1);
+            display: flex; align-items: center; justify-content: center; animation: navSheen 9s ease-in-out infinite;
         }
         .scroll-pill.visible { opacity: 1; visibility: visible; transform: scale(1); }
         .scroll-pill-left { left: 20px; padding: 12px 24px; font-size: 1.05rem; font-weight: 800; cursor: default; }
         
-        /* HIER WURDE POINTER-EVENTS AUF AUTO GESETZT, DAMIT MAN KLICKEN KANN */
         .scroll-pill-right { right: 20px; padding: 4px; pointer-events: auto; cursor: pointer; transition: transform 0.2s;}
         .scroll-pill-right:active { transform: scale(0.9); }
+        .scroll-pill-right img { width: 42px; height: 42px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border-color); }
         
-        .scroll-pill-right img { width: 42px; height: 42px; border-radius: 50%; object-fit: cover; border: 2px solid white; }
         .back-icon { margin-right: 10px; cursor: pointer; color: #3b82f6; transition: transform 0.2s; }
         .back-icon:active { transform: scale(0.8); }
 
         /* Header */
-        header { padding: 30px 24px 10px 24px; }
+        header { padding: 30px 24px 10px 24px; display: flex; justify-content: space-between; align-items: center; }
         .sub-title { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-muted); font-weight: 700; margin-bottom: 4px; }
         .main-title { font-size: 2.5rem; font-weight: 900; letter-spacing: -1px; text-transform: uppercase; }
 
         /* Dashboard Card */
-        .balance-card { background: var(--card-bg); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.8); margin: 10px 24px 24px 24px; padding: 30px 24px; border-radius: 28px; box-shadow: var(--shadow); text-align: center; transition: transform 0.3s ease; }
+        .balance-card { background: var(--card-bg); backdrop-filter: blur(10px); border: 1px solid var(--nav-glass-border); margin: 10px 24px 24px 24px; padding: 30px 24px; border-radius: 28px; box-shadow: var(--shadow); text-align: center; transition: transform 0.3s ease, background 0.3s; }
         .balance-label { font-size: 0.9rem; color: var(--text-muted); font-weight: 500; margin-bottom: 8px; }
-        .balance-amount { font-size: 3rem; font-weight: 800; letter-spacing: -1px; }
-        .balance-spent { margin-top: 10px; font-size: 0.85rem; color: #ef4444; font-weight: 600; background: #fee2e2; display: inline-block; padding: 4px 12px; border-radius: 20px; transition: all 0.3s ease;}
+        .balance-amount { font-size: 3rem; font-weight: 800; letter-spacing: -1px; color: var(--text-main); }
+        .balance-spent { margin-top: 10px; font-size: 0.85rem; color: var(--outflow-text); font-weight: 600; background: var(--outflow-bg); display: inline-block; padding: 4px 12px; border-radius: 20px; transition: all 0.3s ease;}
 
         /* Views */
         .view { display: none; padding: 0 24px; flex-direction: column; gap: 16px; animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
@@ -112,28 +156,28 @@
 
         /* Lists */
         .transaction-list, .announcement-list { display: flex; flex-direction: column; gap: 12px; }
-        .transaction-item { display: flex; align-items: center; justify-content: space-between; background: white; padding: 16px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.02); border: 1px solid #f1f5f9; }
+        .transaction-item { display: flex; align-items: center; justify-content: space-between; background: var(--item-bg); padding: 16px; border-radius: 20px; box-shadow: var(--shadow); border: 1px solid var(--border-color); transition: background 0.3s, border-color 0.3s; }
         .trans-icon-info { display: flex; align-items: center; gap: 16px; }
         .trans-icon { width: 48px; height: 48px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
-        .inflow .trans-icon { background: #dcfce7; color: #16a34a; }
-        .outflow .trans-icon { background: #fee2e2; color: #dc2626; }
-        .trans-details .trans-title { font-weight: 700; font-size: 1.05rem; margin-bottom: 2px; }
+        .inflow .trans-icon { background: var(--inflow-bg); color: var(--inflow-text); }
+        .outflow .trans-icon { background: var(--outflow-bg); color: var(--outflow-text); }
+        .trans-details .trans-title { font-weight: 700; font-size: 1.05rem; margin-bottom: 2px; color: var(--text-main); }
         .trans-details .trans-type { font-size: 0.8rem; color: var(--text-muted); }
         .trans-date { font-size: 0.8rem; color: var(--text-muted); font-weight: 500; text-align: right; }
-        .empty-state { text-align: center; color: var(--text-muted); padding: 20px; font-size: 0.9rem; background: rgba(255,255,255,0.5); border-radius: 20px; border: 1px dashed #cbd5e1; }
+        .empty-state { text-align: center; color: var(--text-muted); padding: 20px; font-size: 0.9rem; background: var(--empty-state-bg); border-radius: 20px; border: 1px dashed var(--input-border); transition: background 0.3s; }
 
         /* Announcements Cards */
-        .announcement-card { background: white; border-radius: 20px; padding: 16px; border: 1px solid #f1f5f9; box-shadow: 0 4px 15px rgba(0,0,0,0.02); position: relative;}
+        .announcement-card { background: var(--item-bg); border-radius: 20px; padding: 16px; border: 1px solid var(--border-color); box-shadow: var(--shadow); position: relative; transition: background 0.3s;}
         .announcement-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
         .announcement-title { font-weight: 800; font-size: 1.1rem; color: var(--text-main); }
         .announcement-date { font-size: 0.75rem; color: var(--text-muted); font-weight: 600; }
-        .announcement-content { font-size: 0.9rem; line-height: 1.5; color: #475569; }
+        .announcement-content { font-size: 0.9rem; line-height: 1.5; color: var(--text-muted); }
         .announcement-delete-btn { position: absolute; top: 16px; right: 16px; color: #ef4444; background: none; border: none; cursor: pointer; display: none; }
         .is-admin .announcement-delete-btn { display: block; }
         
         /* Admin Formulare */
-        .admin-form { background: white; padding: 24px; border-radius: 24px; box-shadow: 0 10px 20px rgba(0,0,0,0.05); border: 1px solid #f1f5f9; display: flex; flex-direction: column; gap: 16px; }
-        .admin-form input { padding: 16px; border-radius: 12px; border: 1px solid #cbd5e1; font-size: 1rem; outline: none; transition: border-color 0.2s; font-family: 'Inter', sans-serif;}
+        .admin-form { background: var(--item-bg); padding: 24px; border-radius: 24px; box-shadow: var(--shadow); border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 16px; transition: background 0.3s; }
+        .admin-form input { padding: 16px; border-radius: 12px; border: 1px solid var(--input-border); font-size: 1rem; outline: none; transition: border-color 0.2s, background 0.3s, color 0.3s; font-family: 'Inter', sans-serif; background: var(--bg-color); color: var(--text-main); }
         .admin-form input:focus { border-color: #3b82f6; }
         .admin-btn-group { display: flex; gap: 8px; flex-wrap: wrap;}
         .admin-btn { flex: 1; min-width: 40%; padding: 14px; border: none; border-radius: 12px; font-weight: 700; color: white; cursor: pointer; transition: transform 0.2s ease; }
@@ -142,113 +186,104 @@
         .admin-btn.sub { background: #dc2626; }
         .admin-btn.set { background: #0f172a; flex-basis: 100%;}
         
+        body.dark-theme .admin-btn.set { background: #3b82f6; } /* Im Darkmode blauer Admin Button, damit man ihn sieht */
+
         /* WYSIWYG Editor */
-        .editor-toolbar { display: flex; gap: 8px; margin-bottom: 8px; background: #f8fafc; padding: 8px; border-radius: 10px; border: 1px solid #e2e8f0; }
-        .editor-toolbar button { background: white; border: 1px solid #cbd5e1; border-radius: 6px; padding: 6px 12px; cursor: pointer; font-weight: bold; color: var(--text-main); }
-        .editor-toolbar button:hover { background: #e2e8f0; }
-        .editor-area { min-height: 100px; padding: 16px; border-radius: 12px; border: 1px solid #cbd5e1; outline: none; font-size: 0.95rem; line-height: 1.5; background: white; }
-        .editor-area:empty:before { content: attr(placeholder); color: #94a3b8; pointer-events: none; display: block; }
+        .editor-toolbar { display: flex; gap: 8px; margin-bottom: 8px; background: var(--bg-color); padding: 8px; border-radius: 10px; border: 1px solid var(--border-color); }
+        .editor-toolbar button { background: var(--item-bg); border: 1px solid var(--input-border); border-radius: 6px; padding: 6px 12px; cursor: pointer; font-weight: bold; color: var(--text-main); }
+        .editor-toolbar button:hover { opacity: 0.8; }
+        .editor-area { min-height: 100px; padding: 16px; border-radius: 12px; border: 1px solid var(--input-border); outline: none; font-size: 0.95rem; line-height: 1.5; background: var(--bg-color); color: var(--text-main); }
+        .editor-area:empty:before { content: attr(placeholder); color: var(--text-muted); pointer-events: none; display: block; }
         .editor-area:focus { border-color: #3b82f6; }
 
         /* Admin Extra Lists */
-        .user-list-item { display: flex; justify-content: space-between; padding: 12px; border-bottom: 1px solid #f1f5f9; font-size: 0.9rem; }
+        .user-list-item { display: flex; justify-content: space-between; padding: 12px; border-bottom: 1px solid var(--border-color); font-size: 0.9rem; }
         .user-list-item:last-child { border-bottom: none; }
         
         .scan-trigger-btn { background: #3b82f6; color: white; border: none; padding: 16px; border-radius: 12px; font-weight: bold; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 10px; }
         #qr-reader-container { display: none; width: 100%; overflow: hidden; border-radius: 12px; border: 2px solid #3b82f6; }
         #qr-reader { width: 100%; }
         
-        .hidden-admin-trigger { text-align: center; margin-top: 20px; font-size: 0.8rem; color: #cbd5e1; cursor: pointer; padding: 10px; }
+        .hidden-admin-trigger { text-align: center; margin-top: 20px; font-size: 0.8rem; color: var(--text-muted); opacity: 0.5; cursor: pointer; padding: 10px; }
 
         /* Floating QR */
-        .qr-floating-btn { position: fixed; bottom: 116px; left: 50%; transform: translateX(130px); width: 56px; height: 56px; background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.4rem; box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4); cursor: pointer; z-index: 99; transition: transform 0.2s ease; }
-        @media(max-width: 430px) { .qr-floating-btn { left: auto; right: 20px; transform: none; } }
+        .qr-floating-btn { 
+            position: fixed; bottom: 116px; left: 50%; transform: translateX(130px); width: 56px; height: 56px; background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.4rem; box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4); cursor: pointer; z-index: 99; 
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease; 
+        }
+        .qr-floating-btn:hover { transform: translateX(130px) scale(1.15); box-shadow: 0 14px 35px rgba(59, 130, 246, 0.6); }
+        .qr-floating-btn:active { transform: translateX(130px) scale(0.9); }
+        @media(max-width: 430px) { 
+            .qr-floating-btn { left: auto; right: 20px; transform: none; } 
+            .qr-floating-btn:hover { transform: scale(1.15); }
+            .qr-floating-btn:active { transform: scale(0.9); }
+        }
 
         /* Bottom Nav */
         .bottom-nav {
             position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
             width: calc(100% - 40px); max-width: 390px; height: 72px;
-            background: linear-gradient(120deg, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0.08) 45%, rgba(255,255,255,0.35) 100%), rgba(255, 255, 255, 0.55);
+            background: var(--nav-glass-bg);
             background-size: 250% 250%, 100% 100%; background-position: 0% 50%, 0 0;
             backdrop-filter: blur(22px) saturate(190%); -webkit-backdrop-filter: blur(22px) saturate(190%);
-            border: 1px solid rgba(255, 255, 255, 0.65); border-radius: 32px;
+            border: 1px solid var(--nav-glass-border); border-radius: 32px;
             display: flex; justify-content: space-between; align-items: center; padding: 0 8px; z-index: 100;
-            box-shadow: 0 16px 40px rgba(15, 23, 42, 0.16), 0 2px 6px rgba(15, 23, 42, 0.06), inset 0 1px 1px rgba(255,255,255,0.9), inset 0 -6px 14px rgba(255,255,255,0.25);
-            animation: navSheen 9s ease-in-out infinite;
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.16), 0 2px 6px rgba(0, 0, 0, 0.06), inset 0 1px 1px rgba(255,255,255,0.2), inset 0 -6px 14px rgba(0,0,0,0.1);
+            animation: navSheen 9s ease-in-out infinite; transition: background 0.3s, border-color 0.3s;
         }
-        @keyframes navSheen { 0%, 100% { background-position: 0% 50%, 0 0; } 50% { background-position: 100% 50%, 0 0; } }
 
         .nav-indicator {
             position: absolute; top: 8px; left: 8px; height: 56px; border-radius: 22px;
-            background: rgba(255, 255, 255, 0.85);
-            box-shadow: 0 6px 14px rgba(15, 23, 42, 0.12), inset 0 1px 2px rgba(255,255,255,1), inset 0 -2px 4px rgba(15,23,42,0.04);
+            background: var(--nav-indicator-bg);
+            box-shadow: var(--nav-indicator-shadow);
             backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
-            transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+            transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease, background 0.3s;
             z-index: 0; pointer-events: none;
         }
         .nav-indicator.squish { animation: liquidSquish 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
         .nav-indicator.dragging { transition: none; }
-        @keyframes liquidSquish {
-            0% { transform: translateX(var(--nav-x, 0)) scaleX(1); }
-            35% { transform: translateX(var(--nav-x, 0)) scaleX(1.18) scaleY(0.86); }
-            65% { transform: translateX(var(--nav-x, 0)) scaleX(0.94) scaleY(1.05); }
-            100% { transform: translateX(var(--nav-x, 0)) scaleX(1); }
-        }
-
-        .nav-item { position: relative; z-index: 1; display: flex; flex-direction: row; align-items: center; justify-content: center; color: #94a3b8; font-size: 0.72rem; font-weight: 600; gap: 0; flex: 1 1 0; height: 56px; margin: 0 2px; border-radius: 22px; cursor: pointer; transition: color 0.25s ease, flex-grow 0.45s cubic-bezier(0.34, 1.2, 0.64, 1); overflow: hidden; touch-action: none; }
+        
+        .nav-item { position: relative; z-index: 1; display: flex; flex-direction: row; align-items: center; justify-content: center; color: var(--text-muted); font-size: 0.72rem; font-weight: 600; gap: 0; flex: 1 1 0; height: 56px; margin: 0 2px; border-radius: 22px; cursor: pointer; transition: color 0.25s ease, flex-grow 0.45s cubic-bezier(0.34, 1.2, 0.64, 1); overflow: hidden; touch-action: none; }
         .nav-item i { font-size: 1.2rem; transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); }
         .nav-item .nav-label { display: inline-block; max-width: 0; opacity: 0; margin-left: 0; white-space: nowrap; overflow: hidden; transition: max-width 0.4s cubic-bezier(0.34, 1.2, 0.64, 1), opacity 0.25s ease 0.05s, margin-left 0.4s cubic-bezier(0.34, 1.2, 0.64, 1); }
         .nav-item.active { color: var(--text-main); flex-grow: 1.9; cursor: grab; }
         .nav-item.active .nav-label { max-width: 90px; opacity: 1; margin-left: 7px; }
-        .nav-item.active i { transform: translateY(0) scale(1.05); color: #0f172a; }
+        .nav-item.active i { transform: translateY(0) scale(1.05); color: var(--text-main); }
         .nav-item:active i { transform: scale(0.85); }
         .nav-item.active:active { cursor: grabbing; }
 
         /* QR-Code Modal & Keyboard PIN Modal */
-        .qr-modal, .pin-modal { position: fixed; top: 0; left: 50%; transform: translateX(-50%) translateY(100%); width: 100%; max-width: 430px; height: 100%; background: #f1f5f9; z-index: 200; transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); display: flex; flex-direction: column; align-items: center; padding: 40px 24px 140px 24px; }
+        .qr-modal, .pin-modal { position: fixed; top: 0; left: 50%; transform: translateX(-50%) translateY(100%); width: 100%; max-width: 430px; height: 100%; background: var(--modal-bg); z-index: 200; transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), background 0.3s; display: flex; flex-direction: column; align-items: center; padding: 40px 24px 140px 24px; }
         .qr-modal.open, .pin-modal.open { transform: translateX(-50%) translateY(0); }
         
-        .qr-modal h2 { font-size: 2rem; font-weight: 900; margin-top: 20px; margin-bottom: 40px; text-transform: uppercase;}
-        .qr-card { background: white; padding: 24px; border-radius: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.06); }
+        .qr-modal h2 { font-size: 2rem; font-weight: 900; margin-top: 20px; margin-bottom: 40px; text-transform: uppercase; color: var(--text-main);}
+        .qr-card { background: white; padding: 24px; border-radius: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.15); }
         .qr-card img { width: 100%; max-width: 260px; display: block; }
-        .close-btn { width: 100%; padding: 20px; background: linear-gradient(135deg, #ff4141 0%, #ff7343 100%); color: white; border: none; border-radius: 24px; font-size: 1.2rem; font-weight: 900; text-transform: uppercase; cursor: pointer; margin-top: auto;}
+        
+        .close-btn { 
+            width: 100%; padding: 20px; background: linear-gradient(135deg, #ff4141 0%, #ff7343 100%); color: white; border: none; border-radius: 24px; font-size: 1.2rem; font-weight: 900; text-transform: uppercase; cursor: pointer; margin-top: auto;
+            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease, filter 0.2s ease;
+        }
+        .close-btn:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 12px 25px rgba(255, 65, 65, 0.4); filter: brightness(1.1); }
+        .close-btn:active { transform: translateY(1px) scale(0.97); box-shadow: 0 4px 10px rgba(255, 65, 65, 0.2); }
 
         /* Custom Keypad */
         .pin-display { display: flex; gap: 16px; margin-top: 20px; margin-bottom: 40px; }
-        .pin-dot { width: 18px; height: 18px; border-radius: 50%; border: 3px solid #cbd5e1; background: transparent; transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); }
-        .pin-dot.filled { background: #0f172a; border-color: #0f172a; transform: scale(1.15); }
+        .pin-dot { width: 18px; height: 18px; border-radius: 50%; border: 3px solid var(--input-border); background: transparent; transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        .pin-dot.filled { background: var(--text-main); border-color: var(--text-main); transform: scale(1.15); }
         .pin-dot.error { border-color: #ef4444; background: #ef4444; }
         .pin-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; width: 100%; max-width: 320px; margin-top: auto; margin-bottom: auto; }
-        .pin-btn { background: white; border: 1px solid rgba(0, 0, 0, 0.04); color: var(--text-main); font-size: 1.8rem; font-weight: 800; width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.03); transition: transform 0.1s ease, background-color 0.1s; }
-        .pin-btn:active { transform: scale(0.9); background-color: #f1f5f9; }
-        .pin-btn.action-clear { background: #fee2e2; color: #ef4444; font-size: 1.3rem; }
-        .pin-btn.action-close { background: #e2e8f0; color: #64748b; font-size: 1.3rem; }
+        .pin-btn { background: var(--pin-btn-bg); border: 1px solid var(--border-color); color: var(--text-main); font-size: 1.8rem; font-weight: 800; width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: var(--shadow); transition: transform 0.1s ease, background-color 0.3s, color 0.3s; }
+        .pin-btn:active { transform: scale(0.9); opacity: 0.8; }
+        .pin-btn.action-clear { background: var(--outflow-bg); color: var(--outflow-text); font-size: 1.3rem; }
+        .pin-btn.action-close { background: var(--bg-color); color: var(--text-muted); font-size: 1.3rem; }
         
-        @keyframes shake {
-            0%, 100% { transform: translateX(-50%) translateX(0); }
-            20%, 60% { transform: translateX(-50%) translateX(-10px); }
-            40%, 80% { transform: translateX(-50%) translateX(10px); }
-        }
-        .pin-modal.shake-shake { animation: shake 0.35s ease-in-out; }
-
-        /* EASTER EGG CSS */
-        .falling-profile {
-            position: fixed;
-            top: 0;
-            border-radius: 50%;
-            border: 2px solid white;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            z-index: 10000;
-            pointer-events: none;
-            /* Start unsichtbar über dem Screen */
-            transform: translateY(-200px);
-            /* Bounce Kurve für realistisches Aufschlagen beim Stapeln */
-            transition: transform 1.2s cubic-bezier(0.34, 1.56, 0.64, 1); 
-        }
-        .falling-profile.drop-off {
-            /* Beschleunigender Fall nach unten, wenn der Stapel zusammenbricht */
-            transition: transform 0.8s cubic-bezier(0.55, 0.085, 0.68, 0.53); 
-        }
+        /* Easter Egg */
+        .falling-profile { position: fixed; top: 0; border-radius: 50%; border: 2px solid white; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 10000; pointer-events: none; transform: translateY(-200px); transition: transform 1.2s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        .falling-profile.drop-off { transition: transform 0.8s cubic-bezier(0.55, 0.085, 0.68, 0.53); }
+        
+        /* Chart Container */
+        .chart-container { position: relative; width: 100%; height: 250px; margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -262,8 +297,14 @@
     <div class="app-container" id="app-container">
         
         <header>
-            <p class="sub-title" id="header-sub">Zollamt Jachenau</p>
-            <h1 class="main-title" id="header-main">Hey!</h1>
+            <div>
+                <p class="sub-title" id="header-sub">Zollamt Jachenau</p>
+                <h1 class="main-title" id="header-main">Hey!</h1>
+            </div>
+            <!-- Neuer Dark Mode Button -->
+            <button class="theme-toggle-btn" onclick="toggleTheme()" id="theme-btn-icon">
+                <i class="fa-solid fa-moon"></i>
+            </button>
         </header>
 
         <div class="balance-card" id="main-balance-card">
@@ -335,6 +376,14 @@
 
         <!-- VIEW 5: ADMIN -->
         <div id="view-admin" class="view">
+            <!-- Statistik Chart.js -->
+            <p class="section-label">Lager-Statistiken</p>
+            <div class="admin-form">
+                <div class="chart-container">
+                    <canvas id="adminChart"></canvas>
+                </div>
+            </div>
+
             <!-- Neue Meldung verfassen -->
             <p class="section-label">Neue Meldung erstellen</p>
             <div class="admin-form">
@@ -372,7 +421,7 @@
             <div class="section-header">
                 <p class="section-label">Alle Registrierten Nutzer</p>
             </div>
-            <input type="text" id="user-search" placeholder="Nutzer suchen (E-Mail)..." oninput="renderAdminUserList(this.value)" style="padding: 14px 16px; border-radius: 12px; border: 1px solid #cbd5e1; font-size: 0.95rem; outline: none;">
+            <input type="text" id="user-search" placeholder="Nutzer suchen (E-Mail)..." oninput="renderAdminUserList(this.value)" style="padding: 14px 16px; border-radius: 12px; border: 1px solid var(--input-border); font-size: 0.95rem; outline: none; background: var(--item-bg); color: var(--text-main);">
             <div class="admin-form" style="padding: 12px;" id="admin-user-list">
                 <div class="empty-state">Lade Nutzer...</div>
             </div>
@@ -409,8 +458,8 @@
 
         <!-- Keyboard / PIN Screen Modal -->
         <div id="pin-screen" class="pin-modal">
-            <h2 style="font-size: 1.8rem; font-weight: 900; letter-spacing: -0.5px; text-transform: uppercase;">Admin Login</h2>
-            <p style="color: var(--text-muted); font-size: 0.95rem; font-weight: 500; margin-top: 6px;">Gib den vierstelligen System-PIN ein</p>
+            <h2 style="font-size: 1.8rem; font-weight: 900; letter-spacing: -0.5px; text-transform: uppercase; color: var(--text-main);">Admin Login</h2>
+            <p style="color: var(--text-muted); font-size: 0.95rem; font-weight: 500; margin-top: 6px;">Gib den System-PIN ein</p>
             
             <div class="pin-display">
                 <div class="pin-dot" id="pin-dot-0"></div>
@@ -455,6 +504,30 @@
     </div>
 
     <script>
+        // --- Dark Mode Logik ---
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'dark') {
+                document.body.classList.add('dark-theme');
+                document.getElementById('theme-btn-icon').innerHTML = '<i class="fa-solid fa-sun"></i>';
+            }
+        }
+        initTheme();
+
+        function toggleTheme() {
+            const isDark = document.body.classList.toggle('dark-theme');
+            const iconBtn = document.getElementById('theme-btn-icon');
+            if (isDark) {
+                localStorage.setItem('theme', 'dark');
+                iconBtn.innerHTML = '<i class="fa-solid fa-sun"></i>';
+            } else {
+                localStorage.setItem('theme', 'light');
+                iconBtn.innerHTML = '<i class="fa-solid fa-moon"></i>';
+            }
+            // Update Chart Colors if Admin view is active
+            if(adminChartInstance) updateAdminChart(); 
+        }
+
         // --- Firebase Setup ---
         const firebaseConfig = {
             apiKey: "AIzaSyD3kppZkw_z7LesZavzyqOq-L8x0aK4NsE",
@@ -473,6 +546,63 @@
         let isAdmin = false;
         let cachedUserTransactions = []; 
         let currentPinBuffer = ""; 
+
+        // --- Chart.js ---
+        let adminChartInstance = null;
+
+        function updateAdminChart() {
+            if (cachedUsers.length === 0) return;
+            
+            let totalBalance = 0;
+            let totalSpent = 0;
+            cachedUsers.forEach(u => {
+                totalBalance += u.balance > 0 ? u.balance : 0; // Nur positives Guthaben summieren
+                totalSpent += u.spent;
+            });
+
+            const ctx = document.getElementById('adminChart').getContext('2d');
+            const isDark = document.body.classList.contains('dark-theme');
+            const textColor = isDark ? '#f8fafc' : '#0f172a';
+            const gridColor = isDark ? '#334155' : '#e2e8f0';
+
+            if (adminChartInstance) {
+                adminChartInstance.destroy();
+            }
+
+            adminChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Gesamt Guthaben', 'Gesamt Ausgaben'],
+                    datasets: [{
+                        label: 'Betrag in €',
+                        data: [totalBalance, totalSpent],
+                        backgroundColor: [
+                            isDark ? 'rgba(74, 222, 128, 0.8)' : 'rgba(22, 163, 74, 0.8)', // Grün für Guthaben
+                            isDark ? 'rgba(248, 113, 113, 0.8)' : 'rgba(220, 38, 38, 0.8)'  // Rot für Ausgaben
+                        ],
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: gridColor },
+                            ticks: { color: textColor }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: textColor, font: { weight: 'bold' } }
+                        }
+                    }
+                }
+            });
+        }
 
         function exportTransactionsCSV(filterType) {
             if (!currentUser) return alert("Zuerst anmelden!");
@@ -712,6 +842,7 @@
                 cachedUsers.sort((a, b) => a.email.localeCompare(b.email));
                 const currentSearch = document.getElementById('user-search') ? document.getElementById('user-search').value : '';
                 renderAdminUserList(currentSearch);
+                updateAdminChart(); // Chart.js updaten, sobald Daten da sind
             });
         }
 
@@ -728,7 +859,7 @@
             }
             filtered.forEach(u => {
                 const bal = u.balance.toFixed(2).replace('.', ',');
-                const balColor = u.balance < 0 ? '#dc2626' : '#16a34a';
+                const balColor = u.balance < 0 ? 'var(--outflow-text)' : 'var(--inflow-text)';
                 list.innerHTML += `
                     <div class="user-list-item" onclick="document.getElementById('target-user').value='${escapeHtml(u.email)}'; window.scrollTo(0,0);" style="cursor:pointer;">
                         <strong>${escapeHtml(u.email)}</strong>
@@ -786,6 +917,9 @@
                 if (!proceed) return;
             }
 
+            // Haptisches Feedback (falls unterstützt)
+            if (navigator.vibrate) navigator.vibrate(150);
+
             dataRef.transaction(currentData => {
                 let data = currentData || { balance: 0, spent: 0 };
                 if (actionType === 'add') data.balance += amountInput;
@@ -816,9 +950,9 @@
                 const logs = []; snap.forEach(child => { logs.push(child.val()); }); logs.reverse();
                 logs.forEach(log => {
                     logList.innerHTML += `
-                        <div style="background:#f8fafc; padding:10px; border-radius:10px; border:1px solid #e2e8f0; margin-bottom:5px;">
-                            <strong>${log.action.toUpperCase()}</strong>: ${log.amount}€ an ${log.target} <br>
-                            <span style="color:#64748b; font-size:0.75rem;">${formatDate(log.timestamp)} | Grund: ${log.reason || '-'}</span>
+                        <div style="background:var(--bg-color); padding:10px; border-radius:10px; border:1px solid var(--border-color); margin-bottom:5px;">
+                            <strong style="color:var(--text-main);">${log.action.toUpperCase()}</strong>: ${log.amount}€ an ${log.target} <br>
+                            <span style="color:var(--text-muted); font-size:0.75rem;">${formatDate(log.timestamp)} | Grund: ${log.reason || '-'}</span>
                         </div>`;
                 });
                 if(logs.length === 0) logList.innerHTML = '<div class="empty-state">Keine Logs vorhanden.</div>';
@@ -889,6 +1023,7 @@
         window.addEventListener('resize', () => {
             const active = document.querySelector('.nav-item.active');
             if (active) moveNavIndicator(active.id);
+            if (adminChartInstance) adminChartInstance.resize();
         });
         window.addEventListener('load', () => moveNavIndicator('nav-start'));
 
@@ -1036,86 +1171,55 @@
 
         // --- EASTER EGG LOGIK ---
         function triggerProfileEasterEgg() {
-            // 1. Konfetti zünden (von den Seiten)
             if (typeof confetti !== 'undefined') {
-                const duration = 3000;
-                const end = Date.now() + duration;
-
+                const duration = 3000; const end = Date.now() + duration;
                 (function frame() {
-                    confetti({
-                        particleCount: 5, angle: 60, spread: 55, origin: { x: 0 },
-                        colors: ['#3b82f6', '#ff9233', '#16a34a', '#7028ff']
-                    });
-                    confetti({
-                        particleCount: 5, angle: 120, spread: 55, origin: { x: 1 },
-                        colors: ['#3b82f6', '#ff9233', '#16a34a', '#7028ff']
-                    });
+                    confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0 }, colors: ['#3b82f6', '#ff9233', '#16a34a', '#7028ff'] });
+                    confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#3b82f6', '#ff9233', '#16a34a', '#7028ff'] });
                     if (Date.now() < end) requestAnimationFrame(frame);
                 }());
             }
 
-            // 2. Profilbilder regnen und stapeln lassen
             const picSrc = document.getElementById('user-profile-pic').src;
-            const numPics = 45; 
-            const pics = [];
-            
-            // Logik, um den Bildschirm in "Spalten" einzuteilen (fürs Aufbauen des Haufens)
-            const binSize = 45; 
-            const numBins = Math.max(1, Math.floor(window.innerWidth / binSize));
-            const bins = new Array(numBins).fill(0); // Speichert die aktuelle Höhe pro Spalte
+            const numPics = 45; const pics = [];
+            const binSize = 45; const numBins = Math.max(1, Math.floor(window.innerWidth / binSize));
+            const bins = new Array(numBins).fill(0); 
 
             for (let i = 0; i < numPics; i++) {
                 setTimeout(() => {
-                    const img = document.createElement('img');
-                    img.src = picSrc;
-                    img.className = 'falling-profile';
-                    
-                    // Zufällige Größe (alle Größen, aber nicht zu groß: 30px bis 65px)
+                    const img = document.createElement('img'); img.src = picSrc; img.className = 'falling-profile';
                     const size = Math.floor(Math.random() * 35) + 30;
-                    img.style.width = size + 'px';
-                    img.style.height = size + 'px';
+                    img.style.width = size + 'px'; img.style.height = size + 'px';
                     
-                    // Finde zufällige Spalte und X-Position
                     const binIndex = Math.floor(Math.random() * numBins);
                     const randomX = (binIndex * binSize) + (Math.random() * (binSize - size/2));
                     img.style.left = randomX + 'px';
                     
-                    // Startposition setzen (Oben, außerhalb des Bildschirms)
                     const initialRotation = Math.random() * 360;
                     img.style.transform = `translateY(-200px) rotate(${initialRotation}deg)`;
                     document.body.appendChild(img);
                     
-                    // Ziel Y-Position berechnen (Boden minus bestehender Stapelhöhe in dieser Spalte)
                     const bottomOffset = bins[binIndex];
                     const targetY = window.innerHeight - bottomOffset - size;
+                    bins[binIndex] += (size * 0.6); 
                     
-                    // Stapelhöhe für diese Spalte erhöhen, damit das nächste Bild weiter oben landet
-                    bins[binIndex] += (size * 0.6); // 0.6 macht, dass sie sich schön überlappen
-                    
-                    // Browser zum neu Berechnen zwingen (Reflow)
                     void img.offsetWidth;
-                    
-                    // Bild nach unten animieren
                     const endRotation = initialRotation + Math.random() * 360;
                     img.style.transform = `translateY(${targetY}px) rotate(${endRotation}deg)`;
-                    
                     pics.push(img);
-                }, i * 60); // Jedes Bild spawnt leicht verzögert
+                }, i * 60); 
             }
 
-            // 3. Nach einigen Sekunden: Stapel nacheinander einstürzen lassen
             setTimeout(() => {
                 pics.forEach((img, index) => {
                     setTimeout(() => {
-                        img.classList.add('drop-off'); // Fall-Kurve ändern (wird nach unten beschleunigt)
+                        img.classList.add('drop-off'); 
                         const currentRotation = img.style.transform.split('rotate(')[1];
                         img.style.transform = `translateY(${window.innerHeight + 200}px) rotate(${currentRotation}`; 
-                        
-                        // Element aus dem DOM löschen, nachdem es unsichtbar ist
                         setTimeout(() => img.remove(), 1000);
-                    }, index * 40); // Nacheinander (Dominosteine-Effekt) abräumen
+                    }, index * 40); 
                 });
-            }, 5500); // Wartet bis alle gefallen und aufgestapelt sind
+            }, 5500); 
         }
 
         // PWA Service Worker Registration
@@ -1129,4 +1233,3 @@
     </script>
 </body>
 </html>
-
